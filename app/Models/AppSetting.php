@@ -34,7 +34,7 @@ class AppSetting extends Model
     }
 
     /** Forget cache (panggil setelah upload file) */
-    public static function flush(string $key = null): void
+    public static function flush(?string $key = null): void
     {
         if ($key) {
             Cache::forget('appset.'.$key);

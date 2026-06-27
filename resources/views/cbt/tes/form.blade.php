@@ -154,7 +154,7 @@
                     {{-- HEADER --}}
                     <div class="relative px-5 sm:px-6 py-4 bg-gradient-to-br from-brand-600 to-brand-700 text-white overflow-hidden">
                         <div class="absolute -top-10 -right-6 w-32 h-32 rounded-full bg-white/10 blur-3xl"></div>
-                        <div class="absolute -bottom-14 -left-6 w-32 h-32 rounded-full bg-indigo-400/20 blur-3xl"></div>
+                        <div class="absolute -bottom-14 -left-6 w-32 h-32 rounded-full bg-accent-400/20 blur-3xl"></div>
                         <div class="relative flex items-center justify-between gap-4">
                             <div class="flex items-center gap-3 min-w-0">
                                 <div class="w-10 h-10 shrink-0 rounded-xl bg-white/15 backdrop-blur grid place-items-center text-[22px] shadow-inner ring-1 ring-white/10">
@@ -262,7 +262,7 @@
                         </div>
 
                         {{-- Info tip --}}
-                        <div class="mt-1.5 rounded-lg bg-gradient-to-r from-brand-50 to-indigo-50/50 border border-brand-100 px-3 py-2 flex items-start gap-2">
+                        <div class="mt-1.5 rounded-lg bg-gradient-to-r from-brand-50 to-accent-50/50 border border-brand-100 px-3 py-2 flex items-start gap-2">
                             <div class="w-5 h-5 shrink-0 rounded-full bg-brand-100 grid place-items-center text-[10px]">💡</div>
                             <p class="text-[10px] text-brand-800 leading-snug">
                                 Batas pelanggaran diatur di field <strong>Max Pelanggaran</strong>.

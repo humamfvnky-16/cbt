@@ -57,11 +57,14 @@ php artisan serve
 
 | Role  | Username                | Password   |
 |-------|  -----| --|
-| Admin | `admin@sekolah.test`    | `password` |
+| Admin | `admin@gmail.com`       | `password` |
 | Guru  | NIP guru (lihat `Data Guru`) | `password` |
 | Siswa | NISN siswa (lihat `Data Siswa`) | `password` |
 
 Contoh NISN: `009900000001` (Ahmad Fauzi), `009900000002` (Bunga Citra), dst.
+
+> Catatan: kredensial di atas berlaku untuk seeder default (`php artisan db:seed`).
+> Seeder jenjang khusus (`SmpSeeder`/`SmaSeeder`/`SmkSeeder`) memakai akun admin `admin@sekolah.test`.
 
 ## Struktur Folder
 
@@ -116,9 +119,9 @@ database/migrations/
 
 - **Tailwind CSS 3.4** + plugin Forms & Typography
 - **Alpine.js 3** untuk interaktivitas ringan (sidebar mobile, timer ujian)
-- Tema warna: `brand` (biru) primary, dengan emerald/amber/rose/sky untuk accent
+- Tema warna: **Teal–Emerald** — `brand` (teal) primary + `accent` (emerald) untuk gradien, dengan sky/amber/rose untuk accent lain
 - Komponen Blade reusable (`<x-icon>`, `<x-stat-card>`, `<x-field>`, `<x-page-header>`)
-- Font Inter (via Bunny Fonts)
+- Font **Plus Jakarta Sans** (fallback Inter, via Bunny Fonts)
 
 ## Fitur Halaman Ujian
 

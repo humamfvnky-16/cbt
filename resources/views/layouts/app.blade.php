@@ -11,7 +11,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         :root {
-            --brand: {{ $AppCfg['theme_color'] ?? '#1f47f5' }};
+            --brand: {{ $AppCfg['theme_color'] ?? '#0d9488' }};
         }
     </style>
     @stack('head')

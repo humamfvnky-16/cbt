@@ -7,8 +7,8 @@
 <div class="space-y-6">
 
     {{-- Greeting banner --}}
-    <div class="rounded-3xl p-6 md:p-8 relative overflow-hidden text-white shadow-soft"
-         style="background: linear-gradient(135deg, #1f47f5 0%, #1934dd 50%, #7c3aed 100%);">
+    <div class="rounded-3xl p-6 md:p-8 relative overflow-hidden text-white shadow-glow"
+         style="background: linear-gradient(135deg, #14b8a6 0%, #0d9488 45%, #059669 100%);">
         <div class="absolute -top-16 -right-16 w-72 h-72 rounded-full bg-white/10 blur-3xl"></div>
         <div class="absolute -bottom-20 -left-10 w-72 h-72 rounded-full bg-white/5 blur-3xl"></div>
         <div class="relative z-10 flex flex-wrap items-end justify-between gap-4">
@@ -96,7 +96,7 @@
                             <div class="text-xs text-ink-500 truncate">{{ optional($h->quiz)->name ?? '-' }}</div>
                         </div>
                         <div class="text-right">
-                            <div class="text-base font-bold bg-gradient-to-r from-brand-600 to-violet-600 bg-clip-text text-transparent">
+                            <div class="text-base font-bold bg-gradient-to-r from-brand-600 to-accent-600 bg-clip-text text-transparent">
                                 {{ $h->score !== null ? number_format($h->score, 1) : '-' }}
                             </div>
                             <div class="text-[10px] text-ink-500">{{ $h->updated_at?->diffForHumans() }}</div>

@@ -28,7 +28,7 @@ class AppServiceProvider extends ServiceProvider
             $view->with('AppCfg', [
                 'app_name'       => AppSetting::get('app_name', config('app.name')),
                 'app_tagline'    => AppSetting::get('app_tagline', 'Sistem Informasi Sekolah Terintegrasi'),
-                'theme_color'    => AppSetting::get('theme_color', '#1f47f5'),
+                'theme_color'    => AppSetting::get('theme_color', '#0d9488'),
                 'logo'           => AppSetting::get('logo'),
                 'favicon'        => AppSetting::get('favicon'),
                 'login_bg'       => AppSetting::get('login_bg'),
@@ -44,7 +44,7 @@ class AppServiceProvider extends ServiceProvider
         return [
             'app_name' => config('app.name'),
             'app_tagline' => 'Sistem Informasi Sekolah Terintegrasi',
-            'theme_color' => '#1f47f5',
+            'theme_color' => '#0d9488',
             'logo' => null, 'favicon' => null, 'login_bg' => null,
             'login_title' => 'Selamat datang di platform CBT Modern sekolah Anda.',
             'login_subtitle' => 'Kelola data guru, siswa, kelas, dan ujian online dalam satu dashboard yang cepat, aman, dan mudah digunakan.',

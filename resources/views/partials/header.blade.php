@@ -31,7 +31,7 @@
             @endif
             <div x-data="{ open: false }" class="relative">
                 <button @click="open=!open" class="flex items-center gap-2.5 group">
-                    <img src="{{ $user->profile_photo_url ?? 'https://ui-avatars.com/api/?name='.urlencode($name) }}"
+                    <img src="{{ $user->profile_photo_url ?? 'https://ui-avatars.com/api/?background=0d9488&color=fff&bold=true&name='.urlencode($name) }}"
                          alt="" class="w-9 h-9 rounded-full ring-2 ring-white shadow-soft object-cover group-hover:ring-brand-200 transition">
                     <div class="hidden sm:block min-w-0 text-left">
                         <div class="text-sm font-semibold text-ink-900 truncate max-w-[160px]">{{ $name }}</div>

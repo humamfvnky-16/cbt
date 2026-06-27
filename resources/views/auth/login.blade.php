@@ -17,15 +17,16 @@
     <style>
         .login-hero {
             @if($AppCfg['login_bg'])
-                background-image: linear-gradient(135deg, rgb(0 40 153 / 64%), rgb(0 0 0 / 78%)),
+                background-image: linear-gradient(135deg, rgb(6 78 59 / 66%), rgb(15 23 42 / 80%)),
                                   url('{{ Storage::url($AppCfg['login_bg']) }}');
                 background-size: cover;
                 background-position: center;
             @else
                 background:
-                    radial-gradient(circle at 20% 20%, rgba(48,102,255,0.25), transparent 50%),
-                    radial-gradient(circle at 80% 30%, rgba(16,185,129,0.18), transparent 55%),
-                    linear-gradient(135deg, #1e293b 0%, #1d2e8b 70%, #1934dd 100%);
+                    radial-gradient(circle at 20% 20%, rgba(20,184,166,0.30), transparent 50%),
+                    radial-gradient(circle at 80% 30%, rgba(16,185,129,0.20), transparent 55%),
+                    radial-gradient(circle at 60% 100%, rgba(56,189,248,0.14), transparent 60%),
+                    linear-gradient(135deg, #0f172a 0%, #115e59 68%, #0d9488 100%);
             @endif
             color: white;
         }

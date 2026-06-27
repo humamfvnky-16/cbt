@@ -32,7 +32,7 @@ class DatabaseSeeder extends Seeder
         $defaults = [
             ['app_name',       'CBT Sekolah',        'text', 'aplikasi'],
             ['app_tagline',    'Sistem Informasi Sekolah Terintegrasi', 'text', 'aplikasi'],
-            ['theme_color',    '#1f47f5',            'color','tampilan'],
+            ['theme_color',    '#0d9488',            'color','tampilan'],
             ['login_title',    'Selamat datang di platform <span class="text-amber-300">CBT Modern</span> sekolah Anda.', 'text', 'login'],
             ['login_subtitle', 'Kelola data guru, siswa, kelas, dan ujian online dalam satu dashboard yang cepat, aman, dan mudah digunakan.', 'text', 'login'],
             ['footer_text',    null, 'text', 'aplikasi'],

@@ -59,7 +59,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // Quiz / Tes
+        // Registrasi Ujian
         Schema::create('quizzes', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -79,8 +79,8 @@ return new class extends Migration
             $table->timestamp('valid_from')->nullable();
             $table->timestamp('valid_upto')->nullable();
             $table->boolean('randomize')->default(false);
-            $table->boolean('show_score')->default(true);
-            $table->boolean('require_session_token')->default(false);
+            $table->boolean('show_score')->default(true); //tampilkan skor setelah selesai ujian
+            $table->boolean('require_session_token')->default(false); //wajibkan token sesi
             $table->json('settings')->nullable();
             $table->timestamps();
             $table->softDeletes();
