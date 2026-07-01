@@ -8,7 +8,7 @@
 
     {{-- Greeting banner --}}
     <div class="rounded-3xl p-6 md:p-8 relative overflow-hidden text-white shadow-glow"
-         style="background: linear-gradient(135deg, #14b8a6 0%, #0d9488 45%, #059669 100%);">
+         style="background: linear-gradient(135deg, #500596 0%, #00c2ae 45%, #500596 100%);">
         <div class="absolute -top-16 -right-16 w-72 h-72 rounded-full bg-white/10 blur-3xl"></div>
         <div class="absolute -bottom-20 -left-10 w-72 h-72 rounded-full bg-white/5 blur-3xl"></div>
         <div class="relative z-10 flex flex-wrap items-end justify-between gap-4">

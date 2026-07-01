@@ -17,7 +17,7 @@
     <style>
         .login-hero {
             @if($AppCfg['login_bg'])
-                background-image: linear-gradient(135deg, rgb(6 78 59 / 66%), rgb(15 23 42 / 80%)),
+                background-image: linear-gradient(135deg, rgb(0 23 24 / 40%), rgb(15 23 42 / 80%)),
                                   url('{{ Storage::url($AppCfg['login_bg']) }}');
                 background-size: cover;
                 background-position: center;
@@ -79,7 +79,7 @@
        
 
         <div class="text-xs text-white/70 relative z-10">
-            © {{ date('Y') }} {{ $AppCfg['app_name'] }} — Powered by Humam Studio
+            © {{ date('Y') }} {{ $AppCfg['app_name'] }} — Powered by CyberGarage
         </div>
     </div>
 

@@ -5,7 +5,7 @@
 
 <aside
     class="fixed inset-y-0 left-0 z-30 w-64 border-r border-black/5 transform md:translate-x-0 transition-transform"
-    style="background-color: #115e59;"
+    style="background-color: #062275;"
     :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'"
     @click="if (window.innerWidth < 768 && $event.target.closest('a[href]')) sidebarOpen = false">
     <div class="flex items-center gap-3 px-5 h-16 border-b border-white/15">
@@ -18,7 +18,7 @@
         @endif
         <div class="min-w-0">
             <div class="text-sm font-bold text-white leading-tight truncate">{{ $AppCfg['app_name'] }}</div>
-            <div class="text-[11px] text-white/70 leading-tight truncate">{{ $AppCfg['app_tagline'] }}</div>
+            <div class="text-[11px] text-white leading-tight truncate">{{ $AppCfg['app_tagline'] }}</div>
         </div>
     </div>
 

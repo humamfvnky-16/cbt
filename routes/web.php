@@ -24,7 +24,6 @@ use App\Http\Controllers\Cbt\TokenSesiController;
 use App\Http\Controllers\Cbt\HasilController;
 use App\Http\Controllers\Cbt\MonitoringController;
 use App\Http\Controllers\Cbt\UjianController;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => redirect()->route('login'));

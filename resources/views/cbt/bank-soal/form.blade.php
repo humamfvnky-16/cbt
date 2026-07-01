@@ -5,6 +5,11 @@
     $typesMap = $types->mapWithKeys(fn ($t) => [$t->id => $t->slug])->toArray();
     $currentTypeId = old('question_type_id', $item->question_type_id ?? $types->first()?->id);
 
+    // Daftar topik untuk cascade (difilter di klien berdasarkan tingkat terpilih)
+    $topicsJson = $topics->map(fn ($t) => [
+        'id' => $t->id, 'topic' => $t->topic, 'tingkat' => $t->tingkat, 'mapel' => $t->mata_pelajaran_id,
+    ])->values();
+
     // PG/PGK options
     $pgOldOpts = old('options', $options->where('is_left_side', '!=', false)->pluck('option_text')->toArray());
     $pgCount = max(count($pgOldOpts), 4);
@@ -40,11 +45,14 @@
           pgCorrect: '{{ $pgCorrect }}',
           pgkCorrect: @js($pgkCorrect),
           bsAnswer: '{{ $bsAnswer }}',
+          tingkat: '{{ old('tingkat', $item->tingkat) }}',
+          topicId: '{{ old('topic_id', $item->topic_id) }}',
+          topics: @js($topicsJson),
       })"
       x-init="initEditors()">
     @csrf @if($item->exists) @method('PUT') @endif
 
-    <div class="grid md:grid-cols-3 gap-4">
+    <div class="grid md:grid-cols-2 gap-4">
         <div>
             <label class="label">Jenis Soal <span class="text-rose-500">*</span></label>
             <select name="question_type_id" class="select" x-model="currentType" @change="changeType()" required>
@@ -54,11 +62,36 @@
             </select>
             @error('question_type_id')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
         </div>
+
         <x-field type="select" name="mata_pelajaran_id" label="Mata Pelajaran" :value="$item->mata_pelajaran_id"
                  :options="$mapel->pluck('nama_mapel', 'id')->toArray()"/>
-        <x-field type="select" name="topic_id" label="Topik" :value="$item->topic_id"
-                 :options="$topics->pluck('topic', 'id')->toArray()"/>
-        <x-field name="tingkat" type="number" label="Tingkat / Kelas" :value="$item->tingkat"/>
+
+        {{-- Tingkat / Kelas: dropdown dari master tingkat_kelas --}}
+        <div>
+            <label class="label">Tingkat / Kelas</label>
+            <select name="tingkat" class="select" x-model="tingkat" @change="onTingkatChange()">
+                <option value="">— Pilih tingkat —</option>
+                @foreach($tingkatList as $nomor => $nama)
+                    <option value="{{ $nomor }}">{{ $nama }}</option>
+                @endforeach
+            </select>
+            @error('tingkat')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
+        </div>
+
+        {{-- Topik: muncul setelah memilih tingkat, difilter sesuai tingkat --}}
+        <div>
+            <label class="label">Topik</label>
+            <select name="topic_id" class="select" x-model="topicId" :disabled="!tingkat"
+                    x-init="$nextTick(() => { if (topicId) $el.value = topicId })">
+                <option value="">— Pilih topik —</option>
+                <template x-for="t in filteredTopics" :key="t.id">
+                    <option :value="String(t.id)" x-text="t.topic"></option>
+                </template>
+            </select>
+            <p x-show="!tingkat" x-cloak class="mt-1 text-xs text-ink-500">Pilih tingkat kelas dulu untuk memuat topik.</p>
+            <p x-show="tingkat && filteredTopics.length === 0" x-cloak class="mt-1 text-xs text-amber-600">Belum ada topik untuk tingkat ini. Tambahkan lewat menu Topik.</p>
+            @error('topic_id')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
+        </div>
     </div>
 
     <x-field name="title" label="Judul Singkat" :value="$item->title" required placeholder="Pendekatan persamaan kuadrat"/>
@@ -112,40 +145,23 @@
     </div>
 
     {{-- ====================== JENIS-SPECIFIC ====================== --}}
-    {{-- PILIHAN GANDA --}}
-    <div x-show="slug === 'pg'" x-cloak>
+    {{-- PILIHAN GANDA & PILIHAN GANDA KOMPLEKS (satu blok, hindari duplikasi name="options[]") --}}
+    <div x-show="slug === 'pg' || slug === 'pgk'" x-cloak>
         <div class="flex items-center justify-between mb-2">
-            <span class="label mb-0">Opsi Jawaban (Pilihan Ganda)</span>
-            <span class="text-xs text-ink-500">Pilih radio untuk opsi benar</span>
+            <span class="label mb-0" x-text="slug === 'pgk' ? 'Opsi (Multi Jawaban Benar)' : 'Opsi Jawaban (Pilihan Ganda)'"></span>
+            <span class="text-xs text-ink-500" x-text="slug === 'pgk' ? 'Centang semua opsi benar' : 'Pilih radio untuk opsi benar'"></span>
         </div>
         <div class="space-y-3">
             @for ($i = 0; $i < $pgCount; $i++)
                 <div class="card card-pad py-3 space-y-2">
                     <div class="flex items-center gap-2">
+                        {{-- PG: radio (di-disable saat mode PGK agar tidak ikut terkirim) --}}
                         <input type="radio" name="correct" value="{{ $i }}" x-model="pgCorrect"
+                               x-show="slug === 'pg'" :disabled="slug !== 'pg'"
                                class="text-brand-600 focus:ring-brand-500 border-slate-300">
-                        <span class="w-7 text-center font-bold text-ink-700">{{ chr(65 + $i) }}</span>
-                        <button type="button" @click="symbolTarget = 'opsi {{ chr(65 + $i) }}'; showSymbols = true"
-                                class="text-[10px] text-brand-600 hover:underline ml-auto">∑ simbol</button>
-                    </div>
-                    <textarea name="options[{{ $i }}]" data-editor="mini" data-opsi-label="opsi {{ chr(65 + $i) }}"
-                              class="opsi">{{ $pgOldOpts[$i] ?? '' }}</textarea>
-                </div>
-            @endfor
-        </div>
-    </div>
-
-    {{-- PILIHAN GANDA KOMPLEKS --}}
-    <div x-show="slug === 'pgk'" x-cloak>
-        <div class="flex items-center justify-between mb-2">
-            <span class="label mb-0">Opsi (Multi Jawaban Benar)</span>
-            <span class="text-xs text-ink-500">Centang semua opsi benar</span>
-        </div>
-        <div class="space-y-3">
-            @for ($i = 0; $i < $pgCount; $i++)
-                <div class="card card-pad py-3 space-y-2">
-                    <div class="flex items-center gap-2">
+                        {{-- PGK: checkbox (di-disable saat mode PG) --}}
                         <input type="checkbox" name="correct_multi[]" value="{{ $i }}"
+                               x-show="slug === 'pgk'" :disabled="slug !== 'pgk'"
                                @checked(in_array((string) $i, array_map('strval', (array) $pgkCorrect), true))
                                class="rounded text-brand-600 focus:ring-brand-500 border-slate-300">
                         <span class="w-7 text-center font-bold text-ink-700">{{ chr(65 + $i) }}</span>
@@ -247,11 +263,25 @@ function imagesUploadHandler(blobInfo) {
     });
 }
 
-function bankSoalForm({ typesMap, currentType, pgCorrect, pgkCorrect, bsAnswer }) {
+function bankSoalForm({ typesMap, currentType, pgCorrect, pgkCorrect, bsAnswer, tingkat, topicId, topics }) {
     return {
         typesMap, currentType, slug: typesMap[currentType] || 'pg',
         pgCorrect, pgkCorrect, bsAnswer,
+        tingkat: tingkat || '', topicId: topicId || '', topics: topics || [],
         showSymbols: false, symbolTarget: 'pertanyaan',
+
+        // Topik yang cocok dengan tingkat terpilih
+        get filteredTopics() {
+            if (!this.tingkat) return [];
+            return this.topics.filter(t => String(t.tingkat) === String(this.tingkat));
+        },
+
+        // Saat tingkat berubah, reset topik jika tak lagi valid
+        onTingkatChange() {
+            if (! this.filteredTopics.some(t => String(t.id) === String(this.topicId))) {
+                this.topicId = '';
+            }
+        },
 
         changeType() { this.slug = this.typesMap[this.currentType] || 'pg'; },
 

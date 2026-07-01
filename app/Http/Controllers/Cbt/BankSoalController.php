@@ -96,6 +96,7 @@ class BankSoalController extends Controller
             'types' => QuestionType::orderBy('id')->get(),
             'mapel' => $mapelList,
             'topics' => Topic::orderBy('topic')->get(),
+            'tingkatList' => \App\Models\TingkatKelas::dropdown(),
             'options' => collect(),
         ]);
     }
@@ -130,6 +131,7 @@ class BankSoalController extends Controller
             'types' => QuestionType::orderBy('id')->get(),
             'mapel' => $mapelList,
             'topics' => Topic::orderBy('topic')->get(),
+            'tingkatList' => \App\Models\TingkatKelas::dropdown(),
             'options' => $bankSoal->options,
         ]);
     }
