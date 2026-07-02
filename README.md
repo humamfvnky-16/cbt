@@ -130,7 +130,7 @@ database/migrations/
 - Navigasi soal sidebar dengan badge "terjawab/belum"
 - Form submit "Selesai & Kirim" → kalkulasi nilai otomatis di server
 
-## Fitur Proteksi (port dari `sigap2025new`)
+## Fitur Proteksi
 
 Aplikasi diperkuat dengan **7 lapis proteksi** untuk keamanan dan integritas ujian:
 
