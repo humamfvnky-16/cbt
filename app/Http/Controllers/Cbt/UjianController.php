@@ -53,7 +53,12 @@ class UjianController extends Controller
             ->withCount('questions')
             ->latest()->paginate(12);
 
-        return view('cbt.ujian.list', compact('quizzes'));
+        // Status attempt siswa ini per quiz (blokir/sedang/selesai) supaya
+        // tombol "Mulai Ujian" di view bisa disesuaikan (terkunci kalau
+        // diblokir, tidak bisa diklik lagi kalau sudah selesai).
+        $statusUjian = QuizAttempt::petaStatusUntukSiswa($quizzes->pluck('id'), $siswa->id);
+
+        return view('cbt.ujian.list', compact('quizzes', 'statusUjian'));
     }
 
     public function start(Quiz $quiz, Request $r)

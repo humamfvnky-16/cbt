@@ -60,6 +60,7 @@ class DatabaseSeeder extends Seeder
             ['rombel/*', 'Kelola Rombel', 'datacenter'],
             ['guru/*', 'Kelola Guru', 'datacenter'],
             ['siswa/*', 'Kelola Siswa', 'datacenter'],
+            ['periodikal/*', 'Administrasi Periodikal (Kenaikan Kelas & Kelulusan)', 'datacenter'],
             ['topik/*', 'Kelola Topik', 'cbt'],
             ['bank-soal/*', 'Kelola Bank Soal', 'cbt'],
             ['tes/*', 'Kelola Tes', 'cbt'],
@@ -80,8 +81,9 @@ class DatabaseSeeder extends Seeder
         foreach ($permList as [$perm, $label, $group]) {
             $p = Permission::firstOrCreate(['permission' => $perm], ['label' => $label, 'group' => $group]);
             $allPermIds[] = $p->id;
-            // operator: hanya datacenter (tanpa guru/sekolah), tanpa hapus
-            if (in_array($group, ['umum', 'datacenter']) && !in_array($perm, ['sekolah/edit', 'guru/*'])) {
+            // operator: hanya datacenter (tanpa guru/sekolah/periodikal -- periodikal
+            // adalah operasi bulk yang mengubah data kelas/status ratusan siswa sekaligus)
+            if (in_array($group, ['umum', 'datacenter']) && !in_array($perm, ['sekolah/edit', 'guru/*', 'periodikal/*'])) {
                 $operatorPermIds[] = $p->id;
             }
         }

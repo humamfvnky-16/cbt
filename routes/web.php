@@ -17,6 +17,7 @@ use App\Http\Controllers\Datacenter\GuruController;
 use App\Http\Controllers\Datacenter\GuruMapelController;
 use App\Http\Controllers\Datacenter\SiswaController;
 use App\Http\Controllers\Datacenter\TingkatKelasController;
+use App\Http\Controllers\Datacenter\PeriodikalController;
 use App\Http\Controllers\LogLoginController;
 use App\Http\Controllers\Cbt\TopikController;
 use App\Http\Controllers\Cbt\BankSoalController;
@@ -125,6 +126,21 @@ Route::middleware([
         Route::get('/siswa/import-template', [SiswaController::class, 'importTemplate'])->name('siswa.import.template');
         Route::get('/siswa/export/excel',    [SiswaController::class, 'exportExcel'])->name('siswa.export.excel');
         Route::resource('siswa', SiswaController::class)->except('show');
+
+        // Administrasi Periodikal (kenaikan kelas / kelulusan antar tahun ajaran)
+        Route::prefix('periodikal')->name('periodikal.')->group(function () {
+            Route::get('/semua',               [PeriodikalController::class, 'semuaForm'])->name('semua.form');
+            Route::post('/semua',              [PeriodikalController::class, 'semuaProses'])->name('semua.proses');
+            Route::post('/duplikasi-struktur', [PeriodikalController::class, 'duplikasiStruktur'])->name('duplikasi-struktur');
+
+            Route::get('/per-rombel',  [PeriodikalController::class, 'perRombelForm'])->name('per-rombel.form');
+            Route::post('/per-rombel', [PeriodikalController::class, 'perRombelProses'])->name('per-rombel.proses');
+
+            Route::get('/koreksi',                          [PeriodikalController::class, 'koreksiIndex'])->name('koreksi.index');
+            Route::get('/koreksi/{riwayatPeriodikal}/edit',  [PeriodikalController::class, 'koreksiEdit'])->name('koreksi.edit');
+            Route::put('/koreksi/{riwayatPeriodikal}',       [PeriodikalController::class, 'koreksiUpdate'])->name('koreksi.update');
+            Route::delete('/koreksi/{riwayatPeriodikal}',    [PeriodikalController::class, 'koreksiUndo'])->name('koreksi.undo');
+        });
     });
 
     // CBT (admin & guru) 

@@ -20,7 +20,7 @@
 
 <aside
     class="fixed inset-y-0 left-0 z-30 w-64 border-r border-black/5 transform md:translate-x-0 transition-transform"
-    style="background-color: #062275;"
+    style="background: linear-gradient(135deg, #4616a3 0%, #00155f 45%, #000b93 100%);"
     :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'"
     @click="if (window.innerWidth < 768 && $event.target.closest('a[href]')) sidebarOpen = false">
     <div class="flex items-center gap-3 px-5 h-16 border-b border-white/15">
@@ -83,6 +83,17 @@
             </a>
             <a href="{{ route('siswa.index') }}" class="sidebar-link {{ request()->routeIs('siswa.*') ? 'active' : '' }}">
                 <x-icon name="users"/> Data Siswa
+            </a>
+
+            <div class="sidebar-section">Administrasi Periodikal</div>
+            <a href="{{ route('periodikal.semua.form') }}" class="sidebar-link {{ request()->routeIs('periodikal.semua.*') ? 'active' : '' }}">
+                <x-icon name="arrow-right"/> Proses Semua Siswa
+            </a>
+            <a href="{{ route('periodikal.per-rombel.form') }}" class="sidebar-link {{ request()->routeIs('periodikal.per-rombel.*') ? 'active' : '' }}">
+                <x-icon name="user"/> Proses Siswa Per Rombel
+            </a>
+            <a href="{{ route('periodikal.koreksi.index') }}" class="sidebar-link {{ request()->routeIs('periodikal.koreksi.*') ? 'active' : '' }}">
+                <x-icon name="edit"/> Koreksi Hasil Periodikal
             </a>
         @endif
 

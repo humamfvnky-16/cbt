@@ -19,13 +19,21 @@ class DashboardController extends Controller
         $role = $user->user_type ?? 'admin';
 
         if ($role === 'siswa') {
+            $ujianTersedia = Quiz::where('is_published', true)
+                ->where(function ($q) {
+                    $q->whereNull('valid_upto')->orWhere('valid_upto', '>=', now());
+                })
+                ->latest()->limit(6)->get();
+
+            // Status attempt siswa ini per quiz (blokir/sedang/selesai) supaya
+            // tombol "Mulai Ujian" di view bisa disesuaikan (terkunci kalau
+            // diblokir, tidak bisa diklik lagi kalau sudah selesai).
+            $statusUjian = QuizAttempt::petaStatusUntukSiswa($ujianTersedia->pluck('id'), $user->id);
+
             return view('dashboard.siswa', [
                 'siswa' => $user,
-                'ujianTersedia' => Quiz::where('is_published', true)
-                    ->where(function ($q) {
-                        $q->whereNull('valid_upto')->orWhere('valid_upto', '>=', now());
-                    })
-                    ->latest()->limit(6)->get(),
+                'ujianTersedia' => $ujianTersedia,
+                'statusUjian' => $statusUjian,
                 'riwayat' => QuizAttempt::with('quiz.mapel')
                     ->where('siswa_id', $user->id)
                     ->latest()->limit(5)->get(),

@@ -18,43 +18,13 @@
       x-data="cbtExam({
           endsAt: '{{ $endsAt->toIso8601String() }}',
           saveUrl: '{{ route('siswa.ujian.save', [$quiz, $attempt]) }}',
-          violationUrl: '{{ route('siswa.ujian.violation', [$quiz, $attempt]) }}',
           blockedUrl: '{{ route('siswa.ujian.blocked', [$quiz, $attempt]) }}',
-          maxViolations: {{ $maxViolations }},
           initialViolations: {{ (int) $attempt->violation_count }},
-          protectionEnabled: {{ $protectionEnabled ? 'true' : 'false' }},
           existing: @js($existingAnswers->mapWithKeys(fn ($a) => [$a->quiz_question_id => $a->question_option_id])->toArray())
-      })"
-      @contextmenu.prevent="logViolation('right_click')"
-      @copy.prevent="logViolation('copy')"
-      @paste.prevent="logViolation('paste')"
-      @cut.prevent="logViolation('cut')">
+      })">
 
-{{-- ============ START GATE: harus klik "Mulai" agar fullscreen tepat diaktifkan via user gesture ============ --}}
-<div x-show="protectionEnabled && needStart" x-cloak
-     class="fixed inset-0 z-50 bg-ink-900/95 backdrop-blur grid place-items-center p-6">
-    <div class="card max-w-lg w-full p-8 text-center">
-        <div class="mx-auto w-16 h-16 rounded-2xl bg-rose-50 text-rose-600 grid place-items-center mb-3 text-2xl">🛡️</div>
-        <h2 class="text-xl font-bold text-ink-900">Ujian Berproteksi</h2>
-        <p class="text-sm text-ink-600 mt-2">{{ $quiz->name }}</p>
-
-        <div class="mt-5 text-left text-sm text-ink-700 bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-1.5">
-            <div class="font-semibold text-amber-800 mb-1">⚠ Aturan ketat ujian:</div>
-            <div :class="isMobile ? 'hidden' : ''">• Layar otomatis <strong>fullscreen</strong> &mdash; jangan keluar</div>
-            <div :class="isMobile ? '' : 'hidden'">• Jangan keluar / pindah aplikasi</div>
-            <div>• Jangan pindah tab / window browser</div>
-            <div>• Dilarang copy / paste / klik kanan</div>
-            <div>• Dilarang membuka DevTools (F12)</div>
-            <div class="font-semibold text-rose-700 pt-1.5 border-t border-amber-200">
-                Maks. <strong>{{ $maxViolations }} pelanggaran</strong> — lebih dari itu, ujian <strong>OTOMATIS DIBLOKIR</strong>.
-            </div>
-        </div>
-
-        <button @click="startExam()" class="btn-primary w-full mt-5 text-base py-3">
-            Saya Mengerti, Mulai Ujian
-        </button>
-    </div>
-</div>
+{{-- ============ START GATE (Vue: ExamStartGate.vue) ============ --}}
+<div id="exam-start-gate-root"></div>
 
 {{-- ============ HEADER ============ --}}
 <header class="sticky top-0 z-20 bg-white border-b border-slate-200">
@@ -68,7 +38,7 @@
                 <div class="text-right hidden sm:block">
                     <div class="text-xs text-ink-500">Pelanggaran</div>
                     <div class="text-sm font-bold"
-                         :class="violations >= maxViolations - 1 ? 'text-rose-600 animate-pulse' : (violations > 0 ? 'text-amber-600' : 'text-emerald-600')">
+                         :class="violations >= {{ $maxViolations - 1 }} ? 'text-rose-600 animate-pulse' : (violations > 0 ? 'text-amber-600' : 'text-emerald-600')">
                         <span x-text="violations"></span> / {{ $maxViolations }}
                     </div>
                 </div>
@@ -86,13 +56,8 @@
         </div>
     </div>
 
-    @if($protectionEnabled)
-        <div x-show="showWarning" x-transition x-cloak
-             class="bg-rose-600 text-white px-4 py-2 text-sm text-center font-semibold">
-            ⚠ Pelanggaran: <span x-text="lastViolation"></span>
-            (<span x-text="violations"></span>/{{ $maxViolations }}) — Ujian akan diblokir jika berlanjut!
-        </div>
-    @endif
+    {{-- ============ BANNER PELANGGARAN (Vue: ExamViolationBanner.vue) ============ --}}
+    <div id="exam-violation-banner-root"></div>
 
     {{-- Banner WAKTU HABIS (sesaat sebelum auto-submit) --}}
     <div x-show="timeOverShown" x-cloak x-transition
@@ -143,19 +108,8 @@
             </div>
         </div>
 
-        @if($protectionEnabled)
-            <div class="card card-pad text-xs text-ink-600 space-y-1.5">
-                <div class="font-semibold text-ink-900 mb-2">🛡️ Aturan Ujian</div>
-                <div x-show="!isMobile">• Tetap dalam mode fullscreen</div>
-                <div x-show="isMobile">• Jangan keluar / pindah aplikasi</div>
-                <div>• Jangan pindah tab / window</div>
-                <div>• Dilarang copy / paste / klik kanan</div>
-                <div>• Dilarang membuka DevTools</div>
-                <div class="pt-2 mt-2 border-t border-slate-100 text-rose-600 font-semibold">
-                    > {{ $maxViolations }} pelanggaran = ujian diblokir
-                </div>
-            </div>
-        @endif
+        {{-- ============ KARTU ATURAN (Vue: ExamRulesCard.vue) ============ --}}
+        <div id="exam-rules-card-root"></div>
     </aside>
 </div>
 
@@ -192,133 +146,39 @@
     </div>
 </div>
 
+{{-- Config proteksi ujian untuk store Vue (resources/js/stores/examProtection.js). --}}
+<script type="application/json" id="exam-protection-config">{!! json_encode([
+    'quizName' => $quiz->name,
+    'maxViolations' => $maxViolations,
+    'initialViolations' => (int) $attempt->violation_count,
+    'protectionEnabled' => (bool) $protectionEnabled,
+    'violationUrl' => route('siswa.ujian.violation', [$quiz, $attempt]),
+    'blockedUrl' => route('siswa.ujian.blocked', [$quiz, $attempt]),
+]) !!}</script>
+
 <script>
 function cbtExam(cfg) {
     return {
         endsAt: new Date(cfg.endsAt).getTime(),
         saveUrl: cfg.saveUrl,
-        violationUrl: cfg.violationUrl,
         blockedUrl: cfg.blockedUrl,
-        maxViolations: cfg.maxViolations,
-        protectionEnabled: cfg.protectionEnabled,
 
         seconds: 0,
         formatted: '00:00:00',
         answered: { ...cfg.existing },
         violations: cfg.initialViolations || 0,
 
-        showWarning: false,
-        lastViolation: '',
-        warningTimer: null,
-
-        isMobile: false,
-        needStart: cfg.protectionEnabled,
-        isFullscreen: false,
-        savingViolation: false,
         confirmSubmit: false,
         timeOverShown: false,
         autoSubmitted: false,
 
         init() {
-            this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-                            || (window.matchMedia && window.matchMedia('(pointer:coarse)').matches);
-
-            if (!cfg.protectionEnabled) {
-                this.needStart = false;
-                this.startTimer();
-                return;
-            }
-
-            // Saat protection on, kita TUNGGU user klik tombol Mulai
-            // (karena requestFullscreen butuh user gesture)
-        },
-
-        async startExam() {
-            this.needStart = false;
-            this.startTimer();
-
-            if (!this.isMobile) {
-                // === DESKTOP: WAJIB FULLSCREEN ===
-                try {
-                    await document.documentElement.requestFullscreen({ navigationUI: 'hide' });
-                    this.isFullscreen = true;
-                } catch (e) {
-                    this.logViolation('fullscreen_denied', 'Browser menolak fullscreen');
-                }
-
-                document.addEventListener('fullscreenchange', () => {
-                    this.isFullscreen = !!document.fullscreenElement;
-                    if (!this.isFullscreen) {
-                        this.logViolation('fullscreen_exit');
-                        // Coba paksa masuk fullscreen lagi
-                        setTimeout(() => {
-                            document.documentElement.requestFullscreen?.().catch(() => {});
-                        }, 100);
-                    }
-                });
-            } else {
-                // === MOBILE: deteksi orientasi & rotasi yang aneh ===
-                if (screen.orientation && screen.orientation.lock) {
-                    try { await screen.orientation.lock('portrait'); } catch (e) {}
-                }
-                screen.orientation?.addEventListener('change', () => {
-                    this.logViolation('orientation_change', screen.orientation?.type);
-                });
-
-                // Mobile: deteksi touch dengan multi-finger (split-screen di Android sering memicu)
-                document.addEventListener('touchstart', (e) => {
-                    if (e.touches.length > 2) this.logViolation('multi_touch');
-                }, { passive: true });
-            }
-
-            this.attachCommonHandlers();
-        },
-
-        attachCommonHandlers() {
-            // 1. Tab / window blur
-            document.addEventListener('visibilitychange', () => {
-                if (document.hidden) this.logViolation(this.isMobile ? 'app_switch' : 'tab_switch');
-            });
-            window.addEventListener('blur', () => this.logViolation('window_blur'));
-            window.addEventListener('pageshow', (e) => {
-                if (e.persisted) this.logViolation('back_forward_cache');
-            });
-
-            // 2. Prevent F12, Ctrl+Shift+I, Ctrl+U, Ctrl+S, Ctrl+P
-            document.addEventListener('keydown', (e) => {
-                const blocked =
-                    e.key === 'F12' ||
-                    (e.ctrlKey && e.shiftKey && ['I','J','C','K'].includes(e.key.toUpperCase())) ||
-                    (e.ctrlKey && ['U','S','P','A'].includes(e.key.toUpperCase())) ||
-                    (e.metaKey && ['I','U','S','P'].includes(e.key.toUpperCase())); // Mac
-                if (blocked) {
-                    e.preventDefault();
-                    this.logViolation('blocked_key', e.key);
-                }
-            });
-
-            // 3. DevTools detection (heuristic)
-            setInterval(() => {
-                const w = window.outerWidth - window.innerWidth;
-                const h = window.outerHeight - window.innerHeight;
-                if (!this.isMobile && (w > 200 || h > 200)) {
-                    this.logViolation('devtools');
-                }
-            }, 3000);
-
-            // 4. Drag & drop / select text
-            document.addEventListener('dragstart', (e) => { e.preventDefault(); });
-            document.addEventListener('selectstart', (e) => {
-                // bolehkan input field
-                if (e.target.matches('input, textarea')) return;
-                e.preventDefault();
-            });
-        },
-
-        /** Pindah ke halaman blokir tanpa prompt browser */
-        goToBlocked() {
-            // pakai replace agar tidak bisa "back"
-            window.location.replace(this.blockedUrl);
+            // Timer HANYA dimulai lewat callback ini -- baik untuk quiz dengan
+            // proteksi aktif (dipanggil oleh examProtectionStore.startExam()
+            // setelah siswa klik "Mulai Ujian") maupun proteksi nonaktif
+            // (dipanggil langsung dari examProtectionStore.init()).
+            examProtectionStore.onExamStarted = () => this.startTimer();
+            examProtectionStore.onViolationsChanged = (n) => { this.violations = n; };
         },
 
         startTimer() {
@@ -358,33 +218,9 @@ function cbtExam(cfg) {
             } catch (e) { console.error(e); }
         },
 
-        async logViolation(type, detail = null) {
-            if (!this.protectionEnabled) return;
-            if (this.savingViolation) return;
-
-            this.violations++;
-            this.lastViolation = type;
-            this.showWarning = true;
-            clearTimeout(this.warningTimer);
-            this.warningTimer = setTimeout(() => this.showWarning = false, 4000);
-
-            this.savingViolation = true;
-            try {
-                const r = await fetch(this.violationUrl, {
-                    method: 'POST',
-                    headers: this.headers(),
-                    body: JSON.stringify({ type, detail })
-                });
-                const data = await r.json();
-                if (data.blocked) {
-                    // Mode "blokir" → halaman blokir
-                    this.goToBlocked();
-                } else if (data.logout) {
-                    // Mode "logout_otomatis" → langsung ke halaman hasil (sudah di-submit di server)
-                    window.location.replace(window.location.pathname.replace(/\/[^\/]+$/, '') + '/result');
-                }
-            } catch (e) { console.error(e); }
-            finally { this.savingViolation = false; }
+        /** Pindah ke halaman blokir tanpa prompt browser (dipakai saat saveAnswer ditolak server, terlepas dari counting pelanggaran Vue). */
+        goToBlocked() {
+            window.location.replace(this.blockedUrl);
         },
 
         headers() {

@@ -234,7 +234,7 @@
                 <b class="title">Presensi</b>
                 <span class="sub">Manajemen Kehadiran</span>
             </div>
-            <a href="{{ $AppCfg['perpus_url'] ?? 'http://localhost:8000' }}" target="_blank" rel="noopener noreferrer" class="soft-card">
+            <a href="{{ $AppCfg['perpus_url'] ?? 'http://192.168.10.188:8080' }}" target="_blank" rel="noopener noreferrer" class="soft-card">
                 <div class="pill" style="background:#f1f2f4;color:var(--ink-500);"></div>
                 <div class="ic">
                     <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">

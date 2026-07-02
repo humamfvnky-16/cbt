@@ -25,6 +25,7 @@ class Siswa extends Authenticatable
             'last_seen_at' => 'datetime',
             'locked_until' => 'datetime',
             'otp_enabled' => 'boolean',
+            'tanggal_status' => 'date',
         ];
     }
 
@@ -60,5 +61,11 @@ class Siswa extends Authenticatable
     public function quizAttempts()
     {
         return $this->hasMany(QuizAttempt::class);
+    }
+
+    /** Riwayat proses Administrasi Periodikal (kenaikan kelas/kelulusan) siswa ini. */
+    public function riwayatPeriodikal()
+    {
+        return $this->hasMany(RiwayatPeriodikal::class);
     }
 }

@@ -20,4 +20,16 @@ class RombonganBelajar extends Model
     }
 
     public function guruMapel() { return $this->hasMany(GuruMapel::class); }
+
+    /** Riwayat Administrasi Periodikal di mana rombel ini menjadi kelas ASAL. */
+    public function riwayatSebagaiAsal()
+    {
+        return $this->hasMany(RiwayatPeriodikal::class, 'rombel_asal_id');
+    }
+
+    /** Riwayat Administrasi Periodikal di mana rombel ini menjadi kelas TUJUAN. */
+    public function riwayatSebagaiTujuan()
+    {
+        return $this->hasMany(RiwayatPeriodikal::class, 'rombel_tujuan_id');
+    }
 }

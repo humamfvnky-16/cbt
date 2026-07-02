@@ -42,4 +42,44 @@ class QuizAttempt extends Model
     public function siswa() { return $this->belongsTo(Siswa::class); }
     public function answers() { return $this->hasMany(QuizAttemptAnswer::class); }
     public function violations() { return $this->hasMany(ExamViolation::class); }
+
+    /**
+     * Bangun peta status ujian (per quiz) untuk SATU siswa -- dipakai di
+     * dashboard siswa & daftar ujian supaya tombol "Mulai Ujian" bisa
+     * disesuaikan: terkunci kalau attempt sedang diblokir, "lanjutkan" kalau
+     * sedang dikerjakan, dan tidak bisa diklik lagi kalau sudah selesai
+     * (dicek terhadap Quiz::max_attempts di view, bukan di sini).
+     *
+     * Return: [quiz_id => [
+     *   'attempt_blokir'   => QuizAttempt|null,  // attempt aktif yang diblokir
+     *   'attempt_sedang'   => QuizAttempt|null,  // attempt yang sedang dikerjakan (belum submit)
+     *   'attempt_terbaru_selesai' => QuizAttempt|null, // attempt selesai paling baru (untuk link "Lihat Hasil")
+     *   'jumlah_selesai'   => int,                // total attempt yang sudah selesai (untuk cek max_attempts)
+     * ]]
+     */
+    public static function petaStatusUntukSiswa(iterable $quizIds, int $siswaId): array
+    {
+        $quizIds = collect($quizIds)->filter()->unique()->values();
+        if ($quizIds->isEmpty()) return [];
+
+        $attemptsPerQuiz = static::whereIn('quiz_id', $quizIds)
+            ->where('siswa_id', $siswaId)
+            ->orderByDesc('id')
+            ->get()
+            ->groupBy('quiz_id');
+
+        $peta = [];
+        foreach ($quizIds as $quizId) {
+            $milik = $attemptsPerQuiz->get($quizId, collect());
+
+            $peta[$quizId] = [
+                'attempt_blokir' => $milik->first(fn ($a) => $a->is_blocked && ! $a->is_done),
+                'attempt_sedang' => $milik->first(fn ($a) => ! $a->is_done && ! $a->is_blocked && $a->time_start),
+                'attempt_terbaru_selesai' => $milik->first(fn ($a) => $a->is_done),
+                'jumlah_selesai' => $milik->where('is_done', true)->count(),
+            ];
+        }
+
+        return $peta;
+    }
 }

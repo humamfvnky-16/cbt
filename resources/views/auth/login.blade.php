@@ -27,7 +27,7 @@
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <!-- Backgroundlogin -->
+    <!--Backgroundlogin-->
     <title>Login &middot; {{ $AppCfg['app_name'] }}</title>
     @if($AppCfg['favicon'])
         <link rel="icon" href="{{ Storage::url($AppCfg['favicon']) }}">
@@ -45,7 +45,7 @@
                     radial-gradient(circle at 20% 20%, rgba(20,184,166,0.30), transparent 50%),
                     radial-gradient(circle at 80% 30%, rgba(16,185,129,0.20), transparent 55%),
                     radial-gradient(circle at 60% 100%, rgba(56,189,248,0.14), transparent 60%),
-                    linear-gradient(135deg, #0f172a 0%, #115e59 68%, #0d9488 100%);
+                    linear-gradient(135deg, #0f172a 0%, #740093 68%, #0d1e94 100%);
             @endif
             color: white;
         }
@@ -95,8 +95,7 @@
                 @endforeach
             </div>
              -->
-        </div>
-       
+            </div>
 
         <div class="text-xs text-white/70 relative z-10">
             © {{ date('Y') }} {{ $AppCfg['app_name'] }} — Powered by CyberGarage
