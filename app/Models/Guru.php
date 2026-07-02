@@ -37,6 +37,12 @@ class Guru extends Authenticatable
     public function getNameAttribute(): ?string { return $this->attributes['nama_ptk'] ?? null; }
     public function getUserNameAttribute(): string { return $this->nip; }
 
+    /** Apakah akun sedang terkunci karena terlalu banyak percobaan login gagal. */
+    public function getIsTerkunciAttribute(): bool
+    {
+        return $this->locked_until && $this->locked_until->isFuture();
+    }
+
     public function getProfilePhotoUrlAttribute(): string
     {
         return $this->foto

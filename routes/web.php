@@ -111,6 +111,7 @@ Route::middleware([
         Route::get('/guru/import-template', [GuruController::class, 'importTemplate'])->name('guru.import.template');
         Route::get('/guru/export/excel',    [GuruController::class, 'exportExcel'])->name('guru.export.excel');
         Route::resource('guru', GuruController::class)->except('show');
+        Route::post('/guru/{guru}/unlock', [GuruController::class, 'unlock'])->name('guru.unlock');
 
         // Data Guru ↔ Mapel ↔ Rombel (import/export HARUS sebelum resource)
         Route::get('/guru-mapel/import',          [GuruMapelController::class, 'importForm'])->name('guru-mapel.import.form');
@@ -126,6 +127,7 @@ Route::middleware([
         Route::get('/siswa/import-template', [SiswaController::class, 'importTemplate'])->name('siswa.import.template');
         Route::get('/siswa/export/excel',    [SiswaController::class, 'exportExcel'])->name('siswa.export.excel');
         Route::resource('siswa', SiswaController::class)->except('show');
+        Route::post('/siswa/{siswa}/unlock', [SiswaController::class, 'unlock'])->name('siswa.unlock');
 
         // Administrasi Periodikal (kenaikan kelas / kelulusan antar tahun ajaran)
         Route::prefix('periodikal')->name('periodikal.')->group(function () {

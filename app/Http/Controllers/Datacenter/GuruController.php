@@ -44,6 +44,17 @@ class GuruController extends Controller
         return back()->with('success', 'Data guru dihapus.');
     }
 
+    /**
+     * Buka kunci akun guru yang sedang terkunci (5x salah login berturut-turut).
+     * Reset failed_login_count & locked_until supaya guru bisa login lagi
+     * saat itu juga, tanpa perlu menunggu 15 menit habis.
+     */
+    public function unlock(Guru $guru)
+    {
+        $guru->update(['locked_until' => null, 'failed_login_count' => 0]);
+        return back()->with('success', "Akun {$guru->nama_ptk} berhasil dibuka. Guru bisa login lagi sekarang.");
+    }
+
     /* ===================== IMPORT / EXPORT ===================== */
 
     public function importForm()

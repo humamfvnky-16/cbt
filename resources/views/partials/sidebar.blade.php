@@ -20,7 +20,7 @@
 
 <aside
     class="fixed inset-y-0 left-0 z-30 w-64 border-r border-black/5 transform md:translate-x-0 transition-transform"
-    style="background: linear-gradient(135deg, #4616a3 0%, #00155f 45%, #000b93 100%);"
+    style="background-color: #062275;"
     :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'"
     @click="if (window.innerWidth < 768 && $event.target.closest('a[href]')) sidebarOpen = false">
     <div class="flex items-center gap-3 px-5 h-16 border-b border-white/15">
@@ -42,6 +42,13 @@
             <div class="mx-1 mb-3 px-3 py-1.5 rounded-lg bg-white/10 text-white/85 text-[11px] font-semibold text-center">
                 {{ $moduleLabel }}
             </div>
+        @endif
+
+        @if($canSwitchModule)
+            <a href="{{ route('landing') }}"
+               class="flex items-center justify-center gap-2 mx-1 mb-3 px-3 py-2 rounded-lg bg-white/15 hover:bg-white/25 text-white text-xs font-semibold transition">
+                <x-icon name="grid" class="w-3.5 h-3.5"/> Ganti Modul
+            </a>
         @endif
 
         <div class="sidebar-section">Beranda</div>

@@ -36,8 +36,19 @@
                 </td>
                 <td>{{ $s->jenis_kelamin }}</td>
                 <td>{{ optional($s->rombelSekarang?->rombel ?? null)->nama_rombel ?? '—' }}</td>
-                <td>@if($s->is_aktif)<span class="badge-success">Aktif</span>@else<span class="badge-muted">Non-aktif</span>@endif</td>
+                <td>
+                    @if($s->is_aktif)<span class="badge-success">Aktif</span>@else<span class="badge-muted">Non-aktif</span>@endif
+                    @if($s->is_terkunci)
+                        <span class="badge-danger block mt-1 w-fit">Terkunci</span>
+                    @endif
+                </td>
                 <td class="text-right">
+                    @if($s->is_terkunci)
+                        <form method="POST" action="{{ route('siswa.unlock', $s) }}" class="inline" onsubmit="return confirm('Buka kunci akun {{ $s->nama_siswa }} sekarang?')">
+                            @csrf
+                            <button class="btn-ghost p-2 text-amber-600" title="Buka Kunci Akun"><x-icon name="key"/></button>
+                        </form>
+                    @endif
                     <a href="{{ route('siswa.edit', $s) }}" class="btn-ghost p-2"><x-icon name="edit"/></a>
                     <form method="POST" action="{{ route('siswa.destroy', $s) }}" class="inline" onsubmit="return confirm('Hapus siswa ini?')">
                         @csrf @method('DELETE')<button class="btn-ghost p-2 text-rose-600"><x-icon name="trash"/></button>

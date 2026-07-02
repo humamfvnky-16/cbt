@@ -25,7 +25,6 @@ class Siswa extends Authenticatable
             'last_seen_at' => 'datetime',
             'locked_until' => 'datetime',
             'otp_enabled' => 'boolean',
-            'tanggal_status' => 'date',
         ];
     }
 
@@ -39,6 +38,12 @@ class Siswa extends Authenticatable
     public function getUserTypeAttribute(): string { return 'siswa'; }
     public function getNameAttribute(): ?string { return $this->attributes['nama_siswa'] ?? null; }
     public function getUserNameAttribute(): string { return $this->nisn; }
+
+    /** Apakah akun sedang terkunci karena terlalu banyak percobaan login gagal. */
+    public function getIsTerkunciAttribute(): bool
+    {
+        return $this->locked_until && $this->locked_until->isFuture();
+    }
 
     public function getProfilePhotoUrlAttribute(): string
     {
@@ -61,11 +66,5 @@ class Siswa extends Authenticatable
     public function quizAttempts()
     {
         return $this->hasMany(QuizAttempt::class);
-    }
-
-    /** Riwayat proses Administrasi Periodikal (kenaikan kelas/kelulusan) siswa ini. */
-    public function riwayatPeriodikal()
-    {
-        return $this->hasMany(RiwayatPeriodikal::class);
     }
 }

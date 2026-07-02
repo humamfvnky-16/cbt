@@ -37,8 +37,19 @@
                 <td>{{ $g->jenis_kelamin }}</td>
                 <td>{{ $g->jabatan ?: '—' }}</td>
                 <td>{{ $g->status_kepegawaian ?: '—' }}</td>
-                <td>@if($g->is_aktif)<span class="badge-success">Aktif</span>@else<span class="badge-muted">Non-aktif</span>@endif</td>
+                <td>
+                    @if($g->is_aktif)<span class="badge-success">Aktif</span>@else<span class="badge-muted">Non-aktif</span>@endif
+                    @if($g->is_terkunci)
+                        <span class="badge-danger block mt-1 w-fit">Terkunci</span>
+                    @endif
+                </td>
                 <td class="text-right">
+                    @if($g->is_terkunci)
+                        <form method="POST" action="{{ route('guru.unlock', $g) }}" class="inline" onsubmit="return confirm('Buka kunci akun {{ $g->nama_ptk }} sekarang?')">
+                            @csrf
+                            <button class="btn-ghost p-2 text-amber-600" title="Buka Kunci Akun"><x-icon name="key"/></button>
+                        </form>
+                    @endif
                     <a href="{{ route('guru.edit', $g) }}" class="btn-ghost p-2"><x-icon name="edit"/></a>
                     <form method="POST" action="{{ route('guru.destroy', $g) }}" class="inline" onsubmit="return confirm('Hapus guru ini?')">
                         @csrf @method('DELETE')<button class="btn-ghost p-2 text-rose-600"><x-icon name="trash"/></button>

@@ -71,6 +71,17 @@ class SiswaController extends Controller
         return back()->with('success', 'Data siswa dihapus.');
     }
 
+    /**
+     * Buka kunci akun siswa yang sedang terkunci (5x salah login berturut-turut).
+     * Reset failed_login_count & locked_until supaya siswa bisa login lagi
+     * saat itu juga, tanpa perlu menunggu 15 menit habis.
+     */
+    public function unlock(Siswa $siswa)
+    {
+        $siswa->update(['locked_until' => null, 'failed_login_count' => 0]);
+        return back()->with('success', "Akun {$siswa->nama_siswa} berhasil dibuka. Siswa bisa login lagi sekarang.");
+    }
+
     /* ===================== IMPORT / EXPORT ===================== */
 
     public function importForm()
