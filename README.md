@@ -33,7 +33,28 @@ cd cbt-v2
 # 1. Install dependencies PHP & JS
 composer install
 npm install
+```
 
+## Kalau versinya di bawah itu (mis. Node 18.x bawaan server), `npm run build` akan gagal dengan error `Vite requires Node.js version 20.19+ or 22.12+` atau `CustomEvent is not defined`. Install Node yang lebih baru pakai **nvm** (tidak butuh akses root):
+
+```bash
+# 1. Install nvm (Node Version Manager) di home user ini
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+
+# 2. Reload shell agar nvm terbaca
+source ~/.bashrc
+# atau kalau tidak ada .bashrc: source ~/.nvm/nvm.sh
+
+# 3. Install & pakai Node 20 LTS
+nvm install 20
+nvm use 20
+nvm alias default 20
+
+# 4. Pastikan versinya sudah benar
+node -v   # harus 20.x
+```
+
+```bash 
 # 2. Setup environment
 cp .env.example .env
 php artisan key:generate
@@ -57,13 +78,25 @@ php artisan serve
 
 App ini dilayani nginx lewat subpath `/cbt` (bukan domain/subdomain sendiri), via `alias` ke folder `public/`. Path server: `/home/smpn40.educore.web.id/apps/cbt`.
 
+### 0. Prasyarat: Node.js versi baru
+
+Project ini pakai **Vite 8**, yang mensyaratkan **Node.js 20.19+ atau 22.12+**. Cek dulu versi Node di server:
+
+```bash
+node -v
+```
+
+> `nvm use`/`nvm alias default` berlaku per user shell. Kalau nanti buka terminal baru dan `node -v` balik ke versi lama, jalankan `nvm use 20` lagi (atau pastikan `nvm alias default 20` sudah tersimpan).
+
+### 1. Install dependency & build
+
 ```bash
 cd /home/smpn40.educore.web.id/apps/cbt
 
 # 1. Install dependency PHP & JS
 composer install --no-dev --optimize-autoloader
 npm install
-npm run build
+npm run build   # BUKAN "npm run dev" — itu untuk development, bukan produksi
 
 # 2. Setup environment (skip jika .env sudah ada & sudah dikonfigurasi)
 cp .env.example .env
