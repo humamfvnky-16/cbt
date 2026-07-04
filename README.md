@@ -53,6 +53,56 @@ php artisan serve
 # Buka http://localhost:8000
 ```
 
+## Deployment Produksi (Virtualmin/Nginx - smpn40.educore.web.id/cbt)
+
+App ini dilayani nginx lewat subpath `/cbt` (bukan domain/subdomain sendiri), via `alias` ke folder `public/`. Path server: `/home/smpn40.educore.web.id/apps/cbt`.
+
+```bash
+cd /home/smpn40.educore.web.id/apps/cbt
+
+# 1. Install dependency PHP & JS
+composer install --no-dev --optimize-autoloader
+npm install
+npm run build
+
+# 2. Setup environment (skip jika .env sudah ada & sudah dikonfigurasi)
+cp .env.example .env
+php artisan key:generate
+
+# 3. Edit .env, pastikan minimal:
+#    APP_ENV=production
+#    APP_DEBUG=false
+#    APP_URL=https://smpn40.educore.web.id/cbt   <-- WAJIB pakai path /cbt
+#    ASSET_URL=https://smpn40.educore.web.id/cbt
+#    DB_DATABASE, DB_USERNAME, DB_PASSWORD sesuai database Virtualmin
+
+# 4. Link storage publik (WAJIB - dipakai untuk logo/favicon/background Settings)
+php artisan storage:link
+
+# 5. Migrasi + seed data awal
+php artisan migrate --force --seed
+
+# 6. Set lisensi aplikasi (lihat bagian "Fitur Proteksi" di atas)
+php artisan app:license unlimited --write
+# atau tanggal tertentu:
+# php artisan app:license 2027-12-31 --write
+
+# 7. Cache config/route/view untuk performa produksi
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+
+# 8. Pastikan folder ini writable oleh user PHP-FPM (mis. www-data / user virtualmin)
+chmod -R 775 storage bootstrap/cache
+```
+
+> Catatan: `APP_URL` **harus** menyertakan `/cbt` karena app ini diakses lewat subfolder di domain utama, bukan root. Tanpa ini, link (`url()`, `asset()`, redirect, endpoint `saveAnswer` di halaman ujian) yang di-generate Laravel akan salah.
+
+Setelah itu reload PHP-FPM/nginx bila perlu:
+```bash
+sudo systemctl reload nginx
+```
+
 ## Akun Default (setelah seeding)
 
 | Role  | Username                | Password   |
