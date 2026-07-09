@@ -6,7 +6,8 @@
 
 <div class="grid lg:grid-cols-3 gap-6">
     <div class="card card-pad text-center">
-        <img src="{{ $user->profile_photo_url }}" class="w-28 h-28 rounded-full mx-auto mb-3 ring-4 ring-brand-50 object-cover" alt="">
+        <x-avatar :src="$user->profile_photo_url" :name="$user->name ?? ($user->nama_siswa ?? $user->nama_ptk ?? '-')"
+                  size="w-28 h-28" class="mx-auto mb-3 ring-4 ring-brand-50 text-2xl"/>
         <div class="font-semibold text-ink-900 text-lg">{{ $user->name ?? ($user->nama_siswa ?? $user->nama_ptk ?? '-') }}</div>
         <div class="text-sm text-ink-500 capitalize">{{ $user->user_type }}</div>
         <div class="text-xs text-ink-500 mt-1 font-mono">{{ $user->user_name }}</div>

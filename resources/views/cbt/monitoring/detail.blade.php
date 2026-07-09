@@ -51,7 +51,7 @@
                 <td class="text-center text-ink-500">{{ $i + 1 }}</td>
                 <td>
                     <div class="flex items-center gap-2">
-                        <img src="{{ $s->profile_photo_url }}" class="w-8 h-8 rounded-full object-cover">
+                        <x-avatar :src="$s->profile_photo_url" :name="$s->nama_siswa" size="w-8 h-8"/>
                         <div>
                             <div class="font-semibold text-ink-900">{{ $s->nama_siswa }}</div>
                             <div class="text-[10px] text-ink-500">{{ $s->jenis_kelamin === 'L' ? 'Laki-laki' : 'Perempuan' }}</div>
