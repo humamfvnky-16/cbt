@@ -29,6 +29,16 @@ trait HasRbac
             $role = $this->role()->with('permissions')->first();
             if ($role) {
                 $this->cachedRoleNames = [$role->name];
+
+                // Super Admin & Admin selalu akses penuh ke SEMUA fitur, terlepas
+                // dari apa yang tercatat di tabel permission — supaya fitur baru
+                // yang lupa didaftarkan ke seeder RBAC tidak ikut memblokir peran
+                // tertinggi ini (lihat riwayat migrasi grant-permission periodikal
+                // & pengaturan sebelumnya — pola yang sama, ditambal di akarnya).
+                if (in_array($role->name, ['super-admin', 'admin'], true)) {
+                    return $this->cachedPermissions = ['*'];
+                }
+
                 $this->cachedPermissions = $role->permissions->pluck('permission')->toArray();
                 return $this->cachedPermissions;
             }
