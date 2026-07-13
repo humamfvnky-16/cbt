@@ -129,6 +129,27 @@ php artisan view:cache
 chmod -R 775 storage bootstrap/cache
 ```
 
+## JIKA ADA ERROR DATABASE PIVOT JALANKAN COMMAND DIBAWAH INI
+```bash
+php artisan tinker
+
+Psy Shell v0.12.23 (PHP 8.3.6 — cli) by Justin Hileman
+New PHP manual is available (latest: 3.1.1). Update with `doc --update-manual`
+> Schema::connection('mysql_datacenter')->create('quiz_rombongan_belajar', function ($t) {
+.     $t->id();
+.     $t->unsignedBigInteger('quiz_id');
+.     $t->foreignId('rombongan_belajar_id')->constrained('rombongan_belajar')->cascadeOnDelete();
+.     $t->timestamps();
+.     $t->unique(['quiz_id', 'rombongan_belajar_id']);
+. });
+
+= null
+
+> exit
+
+   INFO  Goodbye.
+```
+
 > Catatan: `APP_URL` **harus** menyertakan `/cbt` karena app ini diakses lewat subfolder di domain utama, bukan root. Tanpa ini, link (`url()`, `asset()`, redirect, endpoint `saveAnswer` di halaman ujian) yang di-generate Laravel akan salah.
 
 Setelah itu reload PHP-FPM/nginx bila perlu:

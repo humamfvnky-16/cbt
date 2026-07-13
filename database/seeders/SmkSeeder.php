@@ -5,8 +5,15 @@ namespace Database\Seeders;
 use Database\Seeders\Concerns\SchoolSeederBase;
 
 /**
- * Seeder data dummy untuk SMK (Sekolah Menengah Kejuruan).
- * Tingkat 10, 11, 12 — jurusan kejuruan (RPL, TKJ, MM, AKL, OTKP, dst).
+ * Seeder data dummy untuk SMK (Sekolah Menengah Kejuruan) — Kurikulum Merdeka.
+ * Tingkat 10, 11, 12.
+ *
+ * Struktur mengikuti Spektrum Keahlian SMK terbaru: nomenklatur Program Keahlian
+ * lama (RPL/TKJ/MM/OTKP/BDP) diperbarui menjadi PPLG/TJKT/DKV/MPLB/BD. Mapel
+ * kejuruan kelas X kini digabung menjadi satu mapel "Dasar-Dasar Program Keahlian"
+ * per jurusan, sedangkan kelas XI-XII berisi mapel "Konsentrasi Keahlian". Semua
+ * jurusan juga mendapat Projek Kreatif & Kewirausahaan (PKK) dan Praktik Kerja
+ * Lapangan (PKL) sebagai mapel lintas program keahlian.
  *
  * Jalankan: php artisan db:seed --class=SmkSeeder
  */
@@ -38,13 +45,15 @@ class SmkSeeder extends SchoolSeederBase
     protected function jurusanList(): array
     {
         return [
+            // Program Keahlian sesuai Spektrum Keahlian SMK Kurikulum Merdeka
+            // (nomenklatur baru menggantikan RPL/TKJ/MM/OTKP/BDP)
             // [kode, nama, singkatan]
-            ['RPL',  'Rekayasa Perangkat Lunak',              'RPL'],
-            ['TKJ',  'Teknik Komputer & Jaringan',            'TKJ'],
-            ['MM',   'Multimedia',                            'MM'],
-            ['AKL',  'Akuntansi & Keuangan Lembaga',          'AKL'],
-            ['OTKP', 'Otomatisasi & Tata Kelola Perkantoran', 'OTKP'],
-            ['BDP',  'Bisnis Daring & Pemasaran',             'BDP'],
+            ['PPLG', 'Pengembangan Perangkat Lunak & Gim',       'PPLG'],
+            ['TJKT', 'Teknik Jaringan Komputer & Telekomunikasi','TJKT'],
+            ['DKV',  'Desain Komunikasi Visual',                 'DKV'],
+            ['AKL',  'Akuntansi & Keuangan Lembaga',              'AKL'],
+            ['MPLB', 'Manajemen Perkantoran & Layanan Bisnis',   'MPLB'],
+            ['BD',   'Bisnis Digital & Pemasaran',                'BD'],
         ];
     }
 
@@ -52,46 +61,62 @@ class SmkSeeder extends SchoolSeederBase
     {
         return [
             // [kode, nama, kelompok, kode_jurusan, tingkat]
-            // === Muatan Umum (semua jurusan)
-            ['MTK',  'Matematika',           'Umum', null, 10],
-            ['BIN',  'Bahasa Indonesia',     'Umum', null, 10],
-            ['BING', 'Bahasa Inggris',       'Umum', null, 10],
-            ['PKN',  'Pendidikan Pancasila', 'Umum', null, 10],
-            ['AGM',  'Pendidikan Agama Islam','Umum', null, 10],
-            ['SEJ',  'Sejarah Indonesia',    'Umum', null, 10],
-            ['PJK',  'PJOK',                 'Umum', null, 10],
-            ['SBD',  'Seni Budaya',          'Umum', null, 10],
-            ['IPAS', 'IPA & IPS Terapan',    'Umum', null, 10],
 
-            // === Dasar Kejuruan RPL
-            ['DPRPL','Dasar Pemrograman',             'Kejuruan', 'RPL', 10],
-            ['PBO',  'Pemrograman Berorientasi Objek','Kejuruan', 'RPL', 11],
-            ['PWPB', 'Pemrograman Web & Perangkat Bergerak','Kejuruan', 'RPL', 11],
-            ['BSD',  'Basis Data',                    'Kejuruan', 'RPL', 11],
+            // === Mapel Umum (semua program keahlian)
+            ['AGM',   'Pendidikan Agama Islam & Budi Pekerti', 'Umum', null, 10],
+            ['PPK',   'Pendidikan Pancasila',                  'Umum', null, 10],
+            ['BIN',   'Bahasa Indonesia',                      'Umum', null, 10],
+            ['MTK',   'Matematika',                            'Umum', null, 10],
+            ['BING',  'Bahasa Inggris',                        'Umum', null, 10],
+            ['IPAS',  'IPA & IPS (IPAS)',                      'Umum', null, 10],
+            ['SEJ',   'Sejarah',                               'Umum', null, 10],
+            ['SBD',   'Seni Budaya',                           'Umum', null, 10],
+            ['PJK',   'PJOK',                                  'Umum', null, 10],
+            ['INF',   'Informatika',                           'Umum', null, 10],
+            ['MULOK', 'Muatan Lokal',                          'Umum', null, 10],
 
-            // === Dasar Kejuruan TKJ
-            ['DKKJ', 'Dasar Komputer & Jaringan',     'Kejuruan', 'TKJ', 10],
-            ['ASJ',  'Administrasi Sistem Jaringan',  'Kejuruan', 'TKJ', 11],
-            ['TLJ',  'Teknologi Layanan Jaringan',    'Kejuruan', 'TKJ', 11],
-            ['AIJ',  'Administrasi Infrastruktur Jaringan','Kejuruan', 'TKJ', 12],
+            // === Dasar-Dasar Program Keahlian (Kelas X)
+            ['DPPLG', 'Dasar-Dasar PPLG',               'Dasar Program Keahlian', 'PPLG', 10],
+            ['DTJKT', 'Dasar-Dasar TJKT',               'Dasar Program Keahlian', 'TJKT', 10],
+            ['DDKV',  'Dasar-Dasar DKV',                'Dasar Program Keahlian', 'DKV',  10],
+            ['DAKL',  'Dasar-Dasar AKL',                'Dasar Program Keahlian', 'AKL',  10],
+            ['DMPLB', 'Dasar-Dasar MPLB',               'Dasar Program Keahlian', 'MPLB', 10],
+            ['DBD',   'Dasar-Dasar Bisnis & Pemasaran', 'Dasar Program Keahlian', 'BD',   10],
 
-            // === Dasar Kejuruan Multimedia
-            ['DDG',  'Dasar Desain Grafis',           'Kejuruan', 'MM', 10],
-            ['ANI',  'Animasi 2D & 3D',               'Kejuruan', 'MM', 11],
-            ['PVE',  'Produksi Video & Editing',      'Kejuruan', 'MM', 12],
+            // === Konsentrasi Keahlian PPLG (Kelas XI-XII)
+            ['PBO',  'Pemrograman Berorientasi Objek',       'Konsentrasi Keahlian', 'PPLG', 11],
+            ['PWEB', 'Pemrograman Web & Perangkat Bergerak', 'Konsentrasi Keahlian', 'PPLG', 11],
+            ['BSD',  'Basis Data',                           'Konsentrasi Keahlian', 'PPLG', 11],
+            ['PGIM', 'Pengembangan Gim',                      'Konsentrasi Keahlian', 'PPLG', 12],
 
-            // === Dasar Kejuruan AKL
-            ['DAK',  'Dasar Akuntansi',               'Kejuruan', 'AKL', 10],
-            ['AKJ',  'Akuntansi Keuangan',            'Kejuruan', 'AKL', 11],
-            ['KOM',  'Komputer Akuntansi',            'Kejuruan', 'AKL', 12],
+            // === Konsentrasi Keahlian TJKT
+            ['ASJ', 'Administrasi Sistem Jaringan',       'Konsentrasi Keahlian', 'TJKT', 11],
+            ['TLJ', 'Teknologi Layanan Jaringan',         'Konsentrasi Keahlian', 'TJKT', 11],
+            ['AIJ', 'Administrasi Infrastruktur Jaringan','Konsentrasi Keahlian', 'TJKT', 12],
 
-            // === Dasar Kejuruan OTKP
-            ['DKO',  'Otomatisasi Perkantoran',       'Kejuruan', 'OTKP', 10],
-            ['KORS', 'Korespondensi',                 'Kejuruan', 'OTKP', 11],
+            // === Konsentrasi Keahlian DKV
+            ['ANI',  'Animasi 2D & 3D',         'Konsentrasi Keahlian', 'DKV', 11],
+            ['FOTO', 'Fotografi Digital',       'Konsentrasi Keahlian', 'DKV', 11],
+            ['PVE',  'Produksi Video & Editing','Konsentrasi Keahlian', 'DKV', 12],
 
-            // === Dasar Kejuruan BDP
-            ['DBP',  'Dasar Bisnis & Pemasaran',      'Kejuruan', 'BDP', 10],
-            ['MKT',  'Marketing Digital',             'Kejuruan', 'BDP', 11],
+            // === Konsentrasi Keahlian AKL
+            ['AKJ',  'Akuntansi Keuangan',                 'Konsentrasi Keahlian', 'AKL', 11],
+            ['AKPD', 'Akuntansi Perusahaan Jasa & Dagang', 'Konsentrasi Keahlian', 'AKL', 11],
+            ['KOM',  'Komputer Akuntansi',                 'Konsentrasi Keahlian', 'AKL', 12],
+
+            // === Konsentrasi Keahlian MPLB
+            ['KORS',  'Korespondensi',          'Konsentrasi Keahlian', 'MPLB', 11],
+            ['KEARS', 'Kearsipan',              'Konsentrasi Keahlian', 'MPLB', 11],
+            ['HUMAS', 'Layanan Bisnis & Humas', 'Konsentrasi Keahlian', 'MPLB', 12],
+
+            // === Konsentrasi Keahlian BD
+            ['MKT',   'Marketing Digital',        'Konsentrasi Keahlian', 'BD', 11],
+            ['ECOM',  'Pengelolaan Bisnis Online','Konsentrasi Keahlian', 'BD', 11],
+            ['ADMTR', 'Administrasi Transaksi',   'Konsentrasi Keahlian', 'BD', 12],
+
+            // === Lintas Program Keahlian
+            ['PKK', 'Projek Kreatif & Kewirausahaan', 'Kewirausahaan', null, 11],
+            ['PKL', 'Praktik Kerja Lapangan',         'PKL',           null, 12],
         ];
     }
 
@@ -99,32 +124,33 @@ class SmkSeeder extends SchoolSeederBase
     {
         return [
             ['197005111995031001', 'Drs. Hartono Wijaya, M.T.',     'L', 'Wakasek Hubin',           'PNS'],
-            ['197808152002032002', 'Ir. Indah Permatasari, M.Pd.',  'P', 'Kaprog RPL',              'PNS'],
-            ['198106202005011003', 'Joko Suprapto, S.Kom., M.Kom.', 'L', 'Guru RPL',                'PNS'],
-            ['198409102008012004', 'Kartika Sari, S.T.',            'P', 'Guru TKJ',                'PNS'],
-            ['198712252010031005', 'Lukman Hakim, S.Kom.',          'L', 'Kaprog TKJ',              'PPPK'],
-            ['198908152013022006', 'Maya Anggraeni, S.Ds.',         'P', 'Guru Multimedia',         'PPPK'],
+            ['197808152002032002', 'Ir. Indah Permatasari, M.Pd.',  'P', 'Kaprog PPLG',             'PNS'],
+            ['198106202005011003', 'Joko Suprapto, S.Kom., M.Kom.', 'L', 'Guru PPLG',               'PNS'],
+            ['198409102008012004', 'Kartika Sari, S.T.',            'P', 'Guru TJKT',               'PNS'],
+            ['198712252010031005', 'Lukman Hakim, S.Kom.',          'L', 'Kaprog TJKT',             'PPPK'],
+            ['198908152013022006', 'Maya Anggraeni, S.Ds.',         'P', 'Guru DKV',                'PPPK'],
             ['199102052015031007', 'Nurdin Saputra, S.E., M.Ak.',   'L', 'Kaprog AKL',              'PPPK'],
             ['199305182017042008', 'Olivia Damayanti, S.Pd.',       'P', 'Guru Bahasa Indonesia',   'GTT'],
             ['199506112019081009', 'Prabowo Kusuma, S.Pd.',         'L', 'Guru PJOK',               'GTT'],
             ['199708202020012010', 'Qurratul Aini, S.Pd.',          'P', 'Guru Matematika',         'GTT'],
-            ['199810032021091011', 'Rizal Mahendra, S.E.',          'L', 'Guru BDP',                'GTT'],
-            ['199912152022032012', 'Sari Wahyuni, S.Pd.',           'P', 'Guru OTKP',               'GTT'],
+            ['199810032021091011', 'Rizal Mahendra, S.E.',          'L', 'Guru Bisnis Digital',     'GTT'],
+            ['199912152022032012', 'Sari Wahyuni, S.Pd.',           'P', 'Guru MPLB',               'GTT'],
+            ['200002102023011013', 'Taufik Ramadhan, S.Kom.',       'L', 'Guru Informatika',        'GTT'],
         ];
     }
 
     protected function rombelList(): array
     {
-        // X RPL 1-2, X TKJ 1-2, X MM 1, X AKL 1, X OTKP 1, X BDP 1, dst untuk XI & XII
+        // X PPLG 1-2, X TJKT 1-2, X DKV 1, X AKL 1-2, X MPLB 1, X BD 1, dst untuk XI & XII
         $list = [];
         $tingkatLabel = [10 => 'X', 11 => 'XI', 12 => 'XII'];
         $jurusanRombel = [
-            'RPL'  => 2,
-            'TKJ'  => 2,
-            'MM'   => 1,
+            'PPLG' => 2,
+            'TJKT' => 2,
+            'DKV'  => 1,
             'AKL'  => 2,
-            'OTKP' => 1,
-            'BDP'  => 1,
+            'MPLB' => 1,
+            'BD'   => 1,
         ];
         foreach ([10, 11, 12] as $t) {
             $label = $tingkatLabel[$t];
@@ -161,8 +187,8 @@ class SmkSeeder extends SchoolSeederBase
         ];
 
         $rombels = [
-            'X RPL 1','X RPL 2','X TKJ 1','X TKJ 2','X MM 1','X AKL 1','X AKL 2','X OTKP 1','X BDP 1',
-            'XI RPL 1','XI TKJ 1','XI MM 1','XII RPL 1','XII TKJ 1',
+            'X PPLG 1','X PPLG 2','X TJKT 1','X TJKT 2','X DKV 1','X AKL 1','X AKL 2','X MPLB 1','X BD 1',
+            'XI PPLG 1','XI TJKT 1','XI DKV 1','XII PPLG 1','XII TJKT 1',
         ];
         $list = [];
         foreach ($nama as $i => [$n, $jk]) {

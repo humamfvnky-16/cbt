@@ -5,8 +5,14 @@ namespace Database\Seeders;
 use Database\Seeders\Concerns\SchoolSeederBase;
 
 /**
- * Seeder data dummy untuk SMA (Sekolah Menengah Atas).
- * Tingkat 10, 11, 12 — jurusan IPA / IPS / Bahasa.
+ * Seeder data dummy untuk SMA (Sekolah Menengah Atas) — Kurikulum Merdeka.
+ * Tingkat 10, 11, 12.
+ *
+ * Kurikulum Merdeka menghapus jurusan/peminatan IPA-IPS-Bahasa sejak kelas X:
+ * - Fase E (kelas X): seluruh siswa mengambil mapel umum yang sama, tanpa peminatan.
+ * - Fase F (kelas XI-XII): siswa memilih Mata Pelajaran Pilihan lintas kelompok
+ *   (MIPA / IPS / Bahasa & Budaya) — bukan lagi jurusan tetap seperti Kurikulum 2013.
+ *   Kelompok pilihan di seeder ini dipakai untuk pengelompokan rombel saja.
  *
  * Jalankan: php artisan db:seed --class=SmaSeeder
  */
@@ -38,10 +44,13 @@ class SmaSeeder extends SchoolSeederBase
     protected function jurusanList(): array
     {
         return [
+            // Kelompok Mata Pelajaran Pilihan (Fase F / kelas XI-XII) —
+            // bukan jurusan tetap seperti Kurikulum 2013, hanya dipakai
+            // untuk pengelompokan rombel pada seeder ini.
             // [kode, nama, singkatan]
-            ['IPA',  'Matematika & Ilmu Pengetahuan Alam', 'MIPA'],
-            ['IPS',  'Ilmu Pengetahuan Sosial',            'IPS'],
-            ['BHS',  'Bahasa & Budaya',                    'BB'],
+            ['IPA', 'Matematika & Ilmu Pengetahuan Alam', 'MIPA'],
+            ['IPS', 'Ilmu Pengetahuan Sosial',            'IPS'],
+            ['BHS', 'Bahasa & Budaya',                    'BB'],
         ];
     }
 
@@ -49,30 +58,38 @@ class SmaSeeder extends SchoolSeederBase
     {
         return [
             // [kode, nama, kelompok, kode_jurusan, tingkat]
-            // Mapel Umum (semua jurusan)
-            ['MTK',  'Matematika',           'Umum', null, 10],
-            ['BIN',  'Bahasa Indonesia',     'Umum', null, 10],
-            ['BING', 'Bahasa Inggris',       'Umum', null, 10],
-            ['PKN',  'Pendidikan Pancasila & Kewarganegaraan','Umum', null, 10],
-            ['AGM',  'Pendidikan Agama Islam','Umum', null, 10],
-            ['SEJ',  'Sejarah Indonesia',    'Umum', null, 10],
-            ['PJK',  'PJOK',                 'Umum', null, 10],
-            ['SBD',  'Seni Budaya',          'Umum', null, 10],
-            // Peminatan IPA
-            ['FIS',  'Fisika',               'Peminatan', 'IPA', 10],
-            ['KIM',  'Kimia',                'Peminatan', 'IPA', 10],
-            ['BIO',  'Biologi',              'Peminatan', 'IPA', 10],
-            ['MTM',  'Matematika Peminatan', 'Peminatan', 'IPA', 10],
-            // Peminatan IPS
-            ['EKO',  'Ekonomi',              'Peminatan', 'IPS', 10],
-            ['GEO',  'Geografi',             'Peminatan', 'IPS', 10],
-            ['SOS',  'Sosiologi',            'Peminatan', 'IPS', 10],
-            ['SEJP', 'Sejarah Peminatan',    'Peminatan', 'IPS', 10],
-            // Peminatan Bahasa
-            ['BIND', 'Bahasa Indonesia Peminatan', 'Peminatan', 'BHS', 10],
-            ['BINGP','Bahasa Inggris Peminatan',   'Peminatan', 'BHS', 10],
-            ['BSAR', 'Bahasa Arab',          'Peminatan', 'BHS', 10],
-            ['ANT',  'Antropologi',          'Peminatan', 'BHS', 10],
+
+            // === Mapel Umum Fase E (Kelas X) — wajib semua siswa, belum ada peminatan
+            ['AGM',   'Pendidikan Agama Islam & Budi Pekerti', 'Umum', null, 10],
+            ['PPK',   'Pendidikan Pancasila',                  'Umum', null, 10],
+            ['BIN',   'Bahasa Indonesia',                      'Umum', null, 10],
+            ['MTK',   'Matematika',                            'Umum', null, 10],
+            ['BING',  'Bahasa Inggris',                        'Umum', null, 10],
+            ['IPAF',  'Ilmu Pengetahuan Alam',                 'Umum', null, 10],
+            ['IPSF',  'Ilmu Pengetahuan Sosial',               'Umum', null, 10],
+            ['SEJ',   'Sejarah',                               'Umum', null, 10],
+            ['SBD',   'Seni Budaya',                           'Umum', null, 10],
+            ['PJK',   'PJOK',                                  'Umum', null, 10],
+            ['INF',   'Informatika',                           'Umum', null, 10],
+            ['MULOK', 'Muatan Lokal',                          'Umum', null, 10],
+
+            // === Mapel Pilihan Fase F (Kelas XI-XII) — Kelompok MIPA
+            ['FIS',  'Fisika',               'Pilihan', 'IPA', 11],
+            ['KIM',  'Kimia',                'Pilihan', 'IPA', 11],
+            ['BIO',  'Biologi',              'Pilihan', 'IPA', 11],
+            ['INFL', 'Informatika Lanjutan', 'Pilihan', 'IPA', 11],
+
+            // === Mapel Pilihan Fase F — Kelompok IPS
+            ['EKO', 'Ekonomi',     'Pilihan', 'IPS', 11],
+            ['GEO', 'Geografi',    'Pilihan', 'IPS', 11],
+            ['SOS', 'Sosiologi',   'Pilihan', 'IPS', 11],
+            ['ANT', 'Antropologi', 'Pilihan', 'IPS', 11],
+
+            // === Mapel Pilihan Fase F — Kelompok Bahasa & Budaya
+            ['BINGL', 'Bahasa Inggris Lanjutan',           'Pilihan', 'BHS', 11],
+            ['BJPG',  'Bahasa Jepang',                     'Pilihan', 'BHS', 11],
+            ['SASI',  'Bahasa Indonesia Lanjutan (Sastra)','Pilihan', 'BHS', 11],
+            ['ANTB',  'Antropologi',                       'Pilihan', 'BHS', 11],
         ];
     }
 
@@ -89,19 +106,24 @@ class SmaSeeder extends SchoolSeederBase
             ['199403182017042008', 'Jihan Kartika, S.Pd.',           'P', 'Guru Biologi',            'GTT'],
             ['199607252019081009', 'Kemal Pasha, S.Pd.',             'L', 'Guru Sejarah',            'GTT'],
             ['199809102021091010', 'Lestari Wulandari, S.Pd.',       'P', 'Guru Bahasa Indonesia',   'GTT'],
+            ['199911052022011011', 'Muhammad Rizky, S.Kom.',         'L', 'Guru Informatika',        'GTT'],
         ];
     }
 
     protected function rombelList(): array
     {
-        // X IPA 1-3, X IPS 1-2, X BHS 1, lalu tingkat 11 & 12 sama
+        // Kelas X (Fase E): belum ada peminatan/jurusan.
+        // Kelas XI & XII (Fase F): dikelompokkan per Kelompok Mapel Pilihan.
         $list = [];
-        $tingkatLabel = [10 => 'X', 11 => 'XI', 12 => 'XII'];
-        foreach ([10, 11, 12] as $t) {
+        for ($i = 1; $i <= 6; $i++) {
+            $list[] = ["X-$i", 10, null];
+        }
+        $tingkatLabel = [11 => 'XI', 12 => 'XII'];
+        foreach ([11, 12] as $t) {
             $label = $tingkatLabel[$t];
-            for ($i = 1; $i <= 3; $i++) $list[] = ["$label IPA $i", $t, 'IPA'];
+            for ($i = 1; $i <= 3; $i++) $list[] = ["$label MIPA $i", $t, 'IPA'];
             for ($i = 1; $i <= 2; $i++) $list[] = ["$label IPS $i", $t, 'IPS'];
-            $list[] = ["$label BHS 1", $t, 'BHS'];
+            $list[] = ["$label BB 1", $t, 'BHS'];
         }
         return $list;
     }
@@ -127,8 +149,8 @@ class SmaSeeder extends SchoolSeederBase
         ];
 
         $rombels = [
-            'X IPA 1','X IPA 2','X IPA 3','X IPS 1','X IPS 2','X BHS 1',
-            'XI IPA 1','XI IPS 1','XII IPA 1','XII IPS 1',
+            'X-1','X-2','X-3','X-4','X-5','X-6',
+            'XI MIPA 1','XI IPS 1','XII MIPA 1','XII IPS 1',
         ];
         $list = [];
         foreach ($nama as $i => [$n, $jk]) {
