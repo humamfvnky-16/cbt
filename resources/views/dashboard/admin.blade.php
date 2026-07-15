@@ -99,7 +99,7 @@
                         </div>
                         <div class="text-right">
                             <div class="text-base font-bold bg-gradient-to-r from-brand-600 to-accent-600 bg-clip-text text-transparent">
-                                {{ $h->score !== null ? number_format($h->score, 1) : '-' }}
+                                {{ $h->nilai !== null ? number_format($h->nilai, 1) : '-' }}
                             </div>
                             <div class="text-[10px] text-ink-500">{{ $h->updated_at?->diffForHumans() }}</div>
                         </div>

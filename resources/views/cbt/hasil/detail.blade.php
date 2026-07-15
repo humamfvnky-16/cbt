@@ -6,7 +6,7 @@
                :subtitle="$attempt->quiz->name"/>
 
 <div class="grid md:grid-cols-4 gap-4 mb-6">
-    <x-stat-card label="Nilai" :value="number_format($attempt->score ?? 0, 1)" icon="chart" tone="brand"/>
+    <x-stat-card label="Nilai" :value="number_format($attempt->nilai ?? 0, 1)" icon="chart" tone="brand"/>
     <x-stat-card label="Benar" :value="$attempt->correct_count" icon="check" tone="emerald"/>
     <x-stat-card label="Salah" :value="$attempt->wrong_count" icon="trash" tone="rose"/>
     <x-stat-card label="Kosong" :value="$attempt->empty_count" icon="document" tone="amber"/>

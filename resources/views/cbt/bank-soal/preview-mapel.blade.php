@@ -7,13 +7,15 @@
     <x-slot:action>
         <a href="{{ route('bank-soal.index') }}" class="btn-secondary">Kembali</a>
         @if($mapel && $items->isNotEmpty())
+            <a href="{{ route('bank-soal.preview.mapel.word', request()->only('mapel', 'jenis', 'topik', 'tingkat')) }}"
+               class="btn-secondary">📝 Export Word</a>
             <button type="button" onclick="window.print()" class="btn-secondary">🖨️ Cetak</button>
         @endif
     </x-slot:action>
 </x-page-header>
 
 {{-- FILTER --}}
-<form class="card card-pad mb-4 grid md:grid-cols-4 gap-2 print:hidden">
+<form class="card card-pad mb-4 grid md:grid-cols-5 gap-2 print:hidden">
     <select name="mapel" class="select md:col-span-2" required onchange="this.form.submit()">
         <option value="">-- Pilih Mapel --</option>
         @foreach($mapelList as $m)
@@ -34,7 +36,13 @@
             <option value="{{ $tp->id }}" @selected(request('topik')==$tp->id)>{{ $tp->topic }}</option>
         @endforeach
     </select>
-    <div class="md:col-span-4 flex gap-2">
+    <select name="tingkat" class="select">
+        <option value="">Semua kelas</option>
+        @foreach($tingkatList as $nomor => $nama)
+            <option value="{{ $nomor }}" @selected(request('tingkat') == $nomor)>{{ $nama }}</option>
+        @endforeach
+    </select>
+    <div class="md:col-span-5 flex gap-2">
         <button class="btn-primary"><x-icon name="search" class="w-4 h-4"/> Tampilkan</button>
         @if(request('mapel'))
             <a href="{{ route('bank-soal.preview.mapel') }}" class="btn-ghost">Reset</a>

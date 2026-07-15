@@ -77,7 +77,13 @@
                         <td class="font-semibold text-ink-900">{{ optional($r->quiz)->name }}</td>
                         <td>{{ optional($r->quiz->mapel ?? null)->nama_mapel ?? '-' }}</td>
                         <td>{{ $r->created_at->format('d M Y H:i') }}</td>
-                        <td class="text-right font-bold text-brand-600">{{ $r->score !== null ? number_format($r->score, 1) : '-' }}</td>
+                        <td class="text-right font-bold text-brand-600">
+                            @if($r->quiz && ! $r->quiz->show_score)
+                                <span title="Nilai tidak ditampilkan untuk ujian ini">🔒</span>
+                            @else
+                                {{ $r->nilai !== null ? number_format($r->nilai, 1) : '-' }}
+                            @endif
+                        </td>
                     </tr>
                 @empty
                     <tr><td colspan="4" class="text-center py-6 text-ink-500">Belum ada riwayat ujian.</td></tr>

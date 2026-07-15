@@ -44,6 +44,27 @@ class QuizAttempt extends Model
     public function violations() { return $this->hasMany(ExamViolation::class); }
 
     /**
+     * Nilai akhir skala 0–100 (otomatis "puluhan").
+     *
+     * Kolom `score` menyimpan POIN mentah (jumlah marks jawaban benar) —
+     * kalau ditampilkan langsung, ujian 5 soal × 1 poin nilainya maksimal 5.
+     * Accessor ini menormalkan ke skala 100: poin ÷ total poin quiz × 100.
+     * Dihitung on-the-fly supaya attempt lama ikut benar tanpa migrasi data.
+     */
+    public function getNilaiAttribute(): ?float
+    {
+        if ($this->score === null) return null;
+
+        $total = (float) ($this->quiz->total_marks ?? 0);
+        if ($total <= 0) {
+            // Quiz tanpa total poin (mis. soalnya sudah dihapus) → tampilkan poin apa adanya
+            return round((float) $this->score, 1);
+        }
+
+        return round((float) $this->score / $total * 100, 1);
+    }
+
+    /**
      * Bangun peta status ujian (per quiz) untuk SATU siswa -- dipakai di
      * dashboard siswa & daftar ujian supaya tombol "Mulai Ujian" bisa
      * disesuaikan: terkunci kalau attempt sedang diblokir, "lanjutkan" kalau

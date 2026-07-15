@@ -24,6 +24,7 @@ class BankSoalController extends Controller
         $query = Question::with('type', 'mapel', 'topic')
             ->when($r->q, fn ($x) => $x->where('title', 'like', "%{$r->q}%")->orWhere('question', 'like', "%{$r->q}%"))
             ->when($r->mapel, fn ($x) => $x->where('mata_pelajaran_id', $r->mapel))
+            ->when($r->tingkat, fn ($x) => $x->where('tingkat', (int) $r->tingkat))
             ->when($r->jenis, fn ($x) => $x->whereHas('type', fn ($t) => $t->where('slug', $r->jenis)));
 
         $query = $this->scopeBankSoalForUser($query, $user);
@@ -39,6 +40,7 @@ class BankSoalController extends Controller
             'items' => $items,
             'mapelList' => $mapelList,
             'types' => QuestionType::orderBy('id')->get(),
+            'tingkatList' => \App\Models\TingkatKelas::dropdown(),
         ]);
     }
 
@@ -66,14 +68,7 @@ class BankSoalController extends Controller
 
         $items = collect();
         if ($mapel) {
-            $query = Question::with('type', 'options', 'topic')
-                ->where('mata_pelajaran_id', $mapel->id)
-                ->when($r->jenis, fn ($x) => $x->whereHas('type', fn ($t) => $t->where('slug', $r->jenis)))
-                ->when($r->topik, fn ($x) => $x->where('topic_id', $r->topik))
-                ->where('is_active', true);
-
-            $query = $this->scopeBankSoalForUser($query, $user);
-            $items = $query->orderBy('title')->get();
+            $items = $this->previewMapelQuery($r, $mapel)->get();
         }
 
         return view('cbt.bank-soal.preview-mapel', [
@@ -82,7 +77,45 @@ class BankSoalController extends Controller
             'items'     => $items,
             'types'     => QuestionType::orderBy('id')->get(),
             'topiks'    => $mapel ? Topic::where('mata_pelajaran_id', $mapel->id)->orderBy('topic')->get() : collect(),
+            'tingkatList' => \App\Models\TingkatKelas::dropdown(),
         ]);
+    }
+
+    /**
+     * Export Word semua soal satu mapel — mengikuti filter yang sama persis
+     * dengan halaman Preview Mapel (jenis, topik, tingkat).
+     */
+    public function exportMapelWord(Request $r, ExportSoalService $svc)
+    {
+        $r->validate(['mapel' => 'required|exists:mysql_datacenter.mata_pelajaran,id']);
+        $user = $r->user();
+
+        // Guru hanya boleh export mapel yang diajarnya
+        if ($this->shouldScope($user) && ! in_array((int) $r->mapel, $this->guruMapelIds($user), true)) {
+            abort(403, 'Anda tidak mengajar mapel ini.');
+        }
+
+        $mapel = MataPelajaran::findOrFail($r->mapel);
+        $items = $this->previewMapelQuery($r, $mapel)->get();
+
+        if ($items->isEmpty()) {
+            return back()->with('error', 'Tidak ada soal untuk di-export sesuai filter.');
+        }
+
+        return $svc->exportWord($items, 'Soal '.$mapel->nama_mapel);
+    }
+
+    /** Query soal untuk preview/export per mapel (filter jenis, topik, tingkat). */
+    protected function previewMapelQuery(Request $r, MataPelajaran $mapel)
+    {
+        $query = Question::with('type', 'options', 'topic', 'mapel')
+            ->where('mata_pelajaran_id', $mapel->id)
+            ->when($r->jenis, fn ($x) => $x->whereHas('type', fn ($t) => $t->where('slug', $r->jenis)))
+            ->when($r->topik, fn ($x) => $x->where('topic_id', $r->topik))
+            ->when($r->tingkat, fn ($x) => $x->where('tingkat', (int) $r->tingkat))
+            ->where('is_active', true);
+
+        return $this->scopeBankSoalForUser($query, $r->user())->orderBy('title');
     }
 
     public function create()
@@ -121,10 +154,8 @@ class BankSoalController extends Controller
     public function edit(Question $bankSoal)
     {
         $user = request()->user();
-        // Guard: guru hanya boleh edit soal mapel yang dia ajar
-        if ($this->shouldScope($user) && ! in_array($bankSoal->mata_pelajaran_id, $this->guruMapelIds($user), true)) {
-            abort(403, 'Anda tidak mengajar mapel ini.');
-        }
+        // Guard: guru hanya boleh edit soal mapel & tingkat yang dia ajar
+        $this->assertBolehKelolaSoal($user, $bankSoal);
 
         $bankSoal->load('options', 'type');
         $mapelList = $this->shouldScope($user)
@@ -143,6 +174,8 @@ class BankSoalController extends Controller
 
     public function update(Request $r, Question $bankSoal, ImageLocalizer $localizer)
     {
+        $this->assertBolehKelolaSoal($r->user(), $bankSoal);
+
         $this->localizeRequestImages($r, $localizer);
 
         DB::transaction(function () use ($r, $bankSoal) {
@@ -183,6 +216,8 @@ class BankSoalController extends Controller
 
     public function destroy(Question $bankSoal)
     {
+        $this->assertBolehKelolaSoal(request()->user(), $bankSoal);
+
         $bankSoal->delete();
         return back()->with('success', 'Soal dihapus.');
     }

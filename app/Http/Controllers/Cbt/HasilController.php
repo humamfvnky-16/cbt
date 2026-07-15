@@ -242,7 +242,13 @@ class HasilController extends Controller
             ->where('quiz_id', $quiz->id)
             ->where('is_done', true)->get();
 
-        $scores = $attempts->pluck('score')->filter(fn ($v) => $v !== null)->map('floatval')->values()->all();
+        // Normalkan ke skala 0–100 dulu: kolom score = poin mentah, sedangkan
+        // KKM dan seluruh bucket distribusi di bawah mengasumsikan skala 100.
+        $totalMarks = (float) ($quiz->total_marks ?? 0);
+        $scores = $attempts->pluck('score')
+            ->filter(fn ($v) => $v !== null)
+            ->map(fn ($v) => $totalMarks > 0 ? round((float) $v / $totalMarks * 100, 1) : (float) $v)
+            ->values()->all();
         $n = count($scores);
 
         $mean   = $n ? array_sum($scores) / $n : 0;

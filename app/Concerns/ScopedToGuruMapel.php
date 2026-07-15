@@ -37,13 +37,59 @@ trait ScopedToGuruMapel
             ->pluck('rombongan_belajar_id')->unique()->values()->toArray();
     }
 
-    /** Apply scope ke query questions: WHERE mata_pelajaran_id IN (...) */
+    /** Daftar tingkat (kelas) yang diajar guru — dari rombel di penugasan guru_mapel. */
+    protected function guruTingkatList($user): array
+    {
+        if (! $this->shouldScope($user)) return [];
+
+        $rombelIds = $this->guruRombelIds($user);
+        if (empty($rombelIds)) return [];
+
+        return \App\Models\RombonganBelajar::whereIn('id', $rombelIds)
+            ->pluck('tingkat')->filter()->map(fn ($t) => (int) $t)
+            ->unique()->values()->toArray();
+    }
+
+    /**
+     * Apply scope ke query questions: guru hanya melihat soal pada
+     * MAPEL yang diajarnya DAN TINGKAT kelas yang diajarnya.
+     *
+     * Catatan tingkat:
+     *  - soal ber-tingkat → harus cocok dengan salah satu tingkat yang diajar
+     *  - soal TANPA tingkat (null, banyak di data lama) → tetap terlihat,
+     *    supaya soal lama tidak mendadak "hilang" dari guru
+     *  - guru yang penugasannya belum punya rombel sama sekali → filter
+     *    tingkat dilewati (fallback mapel saja), daripada bank soalnya kosong
+     */
     protected function scopeBankSoalForUser(Builder $q, $user): Builder
     {
         if (! $this->shouldScope($user)) return $q;
 
-        $ids = $this->guruMapelIds($user);
-        return $q->whereIn('mata_pelajaran_id', $ids ?: [0]);
+        $q->whereIn('mata_pelajaran_id', $this->guruMapelIds($user) ?: [0]);
+
+        $tingkatList = $this->guruTingkatList($user);
+        if (! empty($tingkatList)) {
+            $q->where(function ($x) use ($tingkatList) {
+                $x->whereNull('tingkat')->orWhereIn('tingkat', $tingkatList);
+            });
+        }
+
+        return $q;
+    }
+
+    /** Guard tunggal: bolehkah guru mengakses/mengubah 1 soal tertentu? */
+    protected function assertBolehKelolaSoal($user, \App\Models\Question $soal): void
+    {
+        if (! $this->shouldScope($user)) return;
+
+        if (! in_array($soal->mata_pelajaran_id, $this->guruMapelIds($user), true)) {
+            abort(403, 'Anda tidak mengajar mapel ini.');
+        }
+
+        $tingkatList = $this->guruTingkatList($user);
+        if ($soal->tingkat && ! empty($tingkatList) && ! in_array((int) $soal->tingkat, $tingkatList, true)) {
+            abort(403, 'Soal ini untuk tingkat kelas yang tidak Anda ajar.');
+        }
     }
 
     /** Apply scope ke query quizzes: filter mapel + rombel guru */

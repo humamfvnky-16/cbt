@@ -30,6 +30,12 @@
             <option value="{{ $t->slug }}" @selected(request('jenis')==$t->slug)>{{ $t->question_type }}</option>
         @endforeach
     </select>
+    <select name="tingkat" class="select w-40">
+        <option value="">Semua kelas</option>
+        @foreach($tingkatList as $nomor => $nama)
+            <option value="{{ $nomor }}" @selected(request('tingkat') == $nomor)>{{ $nama }}</option>
+        @endforeach
+    </select>
     <button class="btn-secondary"><x-icon name="search" class="w-4 h-4"/></button>
 </form>
 

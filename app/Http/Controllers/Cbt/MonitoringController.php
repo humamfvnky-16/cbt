@@ -77,28 +77,72 @@ class MonitoringController extends Controller
     {
         $quiz->load('mapel', 'rombel', 'rombelTargets');
 
-        // Kumpulkan semua rombel target (pivot baru + legacy field)
-        $rombelIds = $quiz->rombelTargets->pluck('id')->toArray();
-        if ($quiz->rombongan_belajar_id) $rombelIds[] = $quiz->rombongan_belajar_id;
-        $rombelIds = array_unique(array_filter($rombelIds));
+        // ===== Rombel target quiz =====
+        // per_tingkat → semua rombel TA aktif pada tingkat tsb;
+        // per_kelas   → rombel pivot + legacy single field.
+        if ($quiz->target_mode === 'per_tingkat') {
+            $targetRombels = RombonganBelajar::whereIn('tingkat', (array) ($quiz->target_tingkat ?? []))
+                ->whereHas('tahunAjaran', fn ($q) => $q->where('is_aktif', true))
+                ->orderBy('nama_rombel')->get();
+        } else {
+            $ids = $quiz->rombelTargets->pluck('id')->toArray();
+            if ($quiz->rombongan_belajar_id) $ids[] = $quiz->rombongan_belajar_id;
+            $ids = array_unique(array_filter($ids));
+            $targetRombels = empty($ids)
+                ? collect()
+                : RombonganBelajar::whereIn('id', $ids)->orderBy('nama_rombel')->get();
+        }
+        $rombelIds = $targetRombels->pluck('id')->all();
 
-        $siswaQuery = Siswa::query();
-        if (! empty($rombelIds)) {
+        // ===== Filter dari UI: per kelas + cari nama/NISN =====
+        $rombelFilter = $r->integer('rombel');
+        // Hanya terima filter yang memang bagian dari target quiz ini
+        if ($rombelFilter && ! empty($rombelIds) && ! in_array($rombelFilter, $rombelIds)) {
+            $rombelFilter = null;
+        }
+        $search = trim((string) $r->input('q'));
+
+        $siswaQuery = Siswa::query()
+            // rombel siswa di TA aktif — untuk kolom "Kelas" & pengurutan per kelas
+            ->with(['siswaRombel' => fn ($q) => $q
+                ->whereHas('tahunAjaran', fn ($x) => $x->where('is_aktif', true))
+                ->with('rombel:id,nama_rombel,tingkat')]);
+
+        if ($rombelFilter) {
+            $siswaQuery->whereHas('siswaRombel', fn ($q) => $q->where('rombongan_belajar_id', $rombelFilter));
+        } elseif (! empty($rombelIds)) {
             $siswaQuery->whereHas('siswaRombel', fn ($q) => $q->whereIn('rombongan_belajar_id', $rombelIds));
         } else {
             $siswaQuery->where('is_aktif', true);
         }
-        $siswas = $siswaQuery->orderBy('nama_siswa')->get();
 
-        // Map attempt per siswa
+        if ($search !== '') {
+            $siswaQuery->where(fn ($q) => $q
+                ->where('nama_siswa', 'like', "%{$search}%")
+                ->orWhere('nisn', 'like', "%{$search}%"));
+        }
+
+        $siswas = $siswaQuery->get();
+
+        // Nama kelas per siswa, lalu urutkan per kelas → nama (bukan acak lagi)
+        foreach ($siswas as $s) {
+            $s->nama_kelas = optional($s->siswaRombel->first()?->rombel)->nama_rombel ?? '—';
+        }
+        $siswas = $siswas->sortBy([['nama_kelas', 'asc'], ['nama_siswa', 'asc']])->values();
+
+        // Map attempt per siswa (relasi quiz di-set manual supaya accessor
+        // `nilai` tidak lazy-load quiz yang sama berulang-ulang per baris)
         $attempts = QuizAttempt::where('quiz_id', $quiz->id)
             ->whereIn('siswa_id', $siswas->pluck('id'))
-            ->get()->keyBy('siswa_id');
+            ->get()->each->setRelation('quiz', $quiz)->keyBy('siswa_id');
 
         return view('cbt.monitoring.detail', [
-            'quiz'     => $quiz,
-            'siswas'   => $siswas,
-            'attempts' => $attempts,
+            'quiz'          => $quiz,
+            'siswas'        => $siswas,
+            'attempts'      => $attempts,
+            'targetRombels' => $targetRombels,
+            'rombelFilter'  => $rombelFilter,
+            'search'        => $search,
         ]);
     }
 

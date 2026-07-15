@@ -7,8 +7,13 @@
 @endpush
 
 @section('content')
+@php
+    $targetLabel = $quiz->target_mode === 'per_tingkat'
+        ? 'Tingkat '.implode(', ', (array) ($quiz->target_tingkat ?? []))
+        : ($targetRombels->pluck('nama_rombel')->implode(', ') ?: 'Semua kelas');
+@endphp
 <x-page-header :title="$quiz->name"
-               :subtitle="(optional($quiz->mapel)->nama_mapel ?? '-').' • '.(optional($quiz->rombel)->nama_rombel ?? 'Semua kelas')">
+               :subtitle="(optional($quiz->mapel)->nama_mapel ?? '-').' • '.$targetLabel">
     <x-slot:action>
         <a href="{{ route('monitoring.index') }}" class="btn-secondary">← Kembali</a>
     </x-slot:action>
@@ -32,11 +37,33 @@
     <x-stat-card label="Belum Mengerjakan"    :value="$belum"        icon="clock"    tone="amber"/>
 </div>
 
+{{-- FILTER: per kelas + cari siswa --}}
+<form method="GET" class="card card-pad mb-4 flex flex-wrap items-end gap-2">
+    <div>
+        <label class="label text-xs">Kelas</label>
+        <select name="rombel" class="select min-w-[180px]" onchange="this.form.submit()">
+            <option value="">Semua Kelas</option>
+            @foreach($targetRombels as $rb)
+                <option value="{{ $rb->id }}" @selected($rombelFilter === $rb->id)>{{ $rb->nama_rombel }}</option>
+            @endforeach
+        </select>
+    </div>
+    <div class="flex-1 min-w-[200px]">
+        <label class="label text-xs">Cari Siswa</label>
+        <input name="q" value="{{ $search }}" class="input w-full" placeholder="Nama siswa atau NISN...">
+    </div>
+    <button class="btn-primary"><x-icon name="search" class="w-4 h-4"/> Cari</button>
+    @if($rombelFilter || $search !== '')
+        <a href="{{ route('monitoring.detail', $quiz) }}" class="btn-secondary">Reset</a>
+    @endif
+</form>
+
 <div class="card overflow-x-auto">
     <table class="table-modern">
         <thead><tr>
             <th class="w-12 text-center">No.</th>
             <th>Siswa</th>
+            <th>Kelas</th>
             <th>NISN</th>
             <th class="text-center">Status</th>
             <th class="text-center">Pelanggaran</th>
@@ -58,6 +85,7 @@
                         </div>
                     </div>
                 </td>
+                <td><span class="badge-info">{{ $s->nama_kelas }}</span></td>
                 <td class="font-mono text-xs">{{ $s->nisn }}</td>
                 <td class="text-center">
                     @if(! $a)
@@ -76,7 +104,7 @@
                     @endif
                 </td>
                 <td class="text-right font-bold text-brand-600">
-                    {{ $a && $a->score !== null ? number_format($a->score, 1) : '—' }}
+                    {{ $a && $a->nilai !== null ? number_format($a->nilai, 1) : '—' }}
                 </td>
                 <td class="text-xs text-ink-500 whitespace-nowrap">
                     {{ optional($a?->time_start)->format('d/m H:i') ?: '—' }}<br>
@@ -129,7 +157,7 @@
             </tr>
         @endforeach
         @if($siswas->isEmpty())
-            <tr><td colspan="8" class="text-center py-10 text-ink-500">Tidak ada peserta.</td></tr>
+            <tr><td colspan="9" class="text-center py-10 text-ink-500">Tidak ada peserta{{ $search !== '' ? ' yang cocok dengan pencarian "'.$search.'"' : '' }}.</td></tr>
         @endif
         </tbody>
     </table>

@@ -71,8 +71,8 @@
                 <td>{{ optional($h->quiz->mapel ?? null)->nama_mapel ?? '-' }}</td>
                 <td class="text-xs">{{ optional($h->time_end)->format('d M H:i') }}</td>
                 <td class="text-right">
-                    <div class="text-lg font-bold {{ $h->score >= 70 ? 'text-emerald-600' : 'text-rose-600' }}">
-                        {{ $h->score !== null ? number_format($h->score, 1) : '-' }}
+                    <div class="text-lg font-bold {{ ($h->nilai ?? 0) >= 70 ? 'text-emerald-600' : 'text-rose-600' }}">
+                        {{ $h->nilai !== null ? number_format($h->nilai, 1) : '-' }}
                     </div>
                     <div class="text-[10px] text-ink-500">B:{{ $h->correct_count }} S:{{ $h->wrong_count }} K:{{ $h->empty_count }}</div>
                 </td>

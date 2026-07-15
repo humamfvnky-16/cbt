@@ -83,6 +83,7 @@ Route::middleware([
 
         // PREVIEW (HARUS sebelum resource biar tidak tertangkap {bankSoal})
         Route::get('/bank-soal/preview-mapel',    [BankSoalController::class, 'previewMapel'])->name('bank-soal.preview.mapel');
+        Route::get('/bank-soal/preview-mapel/export-word', [BankSoalController::class, 'exportMapelWord'])->name('bank-soal.preview.mapel.word');
 
         // Import & Export Bank Soal (HARUS sebelum resource biar tidak tertangkap {bankSoal})
         Route::get('/bank-soal/import',           [BankSoalController::class, 'importForm'])->name('bank-soal.import.form');

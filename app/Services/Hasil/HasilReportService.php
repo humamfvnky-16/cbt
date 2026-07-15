@@ -82,7 +82,8 @@ class HasilReportService
                 'E' => (string) $tingkat,
                 'F' => optional($h->quiz)->name ?? '-',
             ]);
-            $sheet->setCellValue("G{$row}", $h->score !== null ? (float) $h->score : null);
+            // nilai = skala 0–100 (accessor QuizAttempt::getNilaiAttribute), bukan poin mentah
+            $sheet->setCellValue("G{$row}", $h->nilai);
             $sheet->setCellValueExplicit("H{$row}", $statusLabel, DataType::TYPE_STRING);
             $sheet->setCellValueExplicit(
                 "I{$row}",

@@ -15,6 +15,7 @@
         .kunci { color: #0a7; font-weight: bold; }
         table.pj { border-collapse: collapse; margin-top: 4px; }
         table.pj td { border: 1px solid #ddd; padding: 4px 8px; font-size: 10pt; }
+        img { max-width: 420px; max-height: 300px; }
     </style>
 </head>
 <body>
@@ -31,13 +32,15 @@
             <span class="tag">{{ optional($q->type)->question_type ?? 'Soal' }}</span>
             <span class="tag">{{ optional($q->mapel)->nama_mapel ?? '-' }}</span>
         </div>
-        <p><strong>{{ $idx + 1 }}.</strong> {!! strip_tags($q->question, '<br><strong><em><u>') !!}</p>
+        {{-- pdfHtml(): pertahankan sup/sub/img (simbol & gambar matematika),
+             embed gambar sebagai base64 supaya pasti dirender dompdf --}}
+        <p><strong>{{ $idx + 1 }}.</strong> {!! \App\Services\Soal\ExportSoalService::pdfHtml($q->question) !!}</p>
 
         @if(in_array($jenis, ['pg', 'pgk']))
             <ol type="A" class="opsi">
                 @foreach($q->options as $opt)
                     <li @if($withAnswer && $opt->is_correct) class="kunci" @endif>
-                        {{ $opt->option_text }} @if($withAnswer && $opt->is_correct) ✓ @endif
+                        {!! \App\Services\Soal\ExportSoalService::pdfHtml($opt->option_text) !!} @if($withAnswer && $opt->is_correct) ✓ @endif
                     </li>
                 @endforeach
             </ol>
@@ -45,7 +48,7 @@
             <div class="opsi">
                 ( ) Benar &nbsp;&nbsp;&nbsp; ( ) Salah
                 @if($withAnswer)
-                    <div class="kunci">Kunci: {{ optional($q->options->firstWhere('is_correct', true))->option_text }}</div>
+                    <div class="kunci">Kunci: {!! \App\Services\Soal\ExportSoalService::pdfHtml(optional($q->options->firstWhere('is_correct', true))->option_text) !!}</div>
                 @endif
             </div>
         @elseif($jenis === 'fill-blank')
@@ -60,8 +63,8 @@
                 <tr><th>Kiri</th><th>Kanan (acak)</th></tr>
                 @for($i = 0; $i < max(count($kiri), count($kanan)); $i++)
                     <tr>
-                        <td>{{ chr(65 + $i) }}. {{ $kiri[$i]->option_text ?? '' }}</td>
-                        <td>{{ $i + 1 }}. {{ $kanan[$i]->option_text ?? '' }}</td>
+                        <td>{{ chr(65 + $i) }}. {!! \App\Services\Soal\ExportSoalService::pdfHtml($kiri[$i]->option_text ?? '') !!}</td>
+                        <td>{{ $i + 1 }}. {!! \App\Services\Soal\ExportSoalService::pdfHtml($kanan[$i]->option_text ?? '') !!}</td>
                     </tr>
                 @endfor
             </table>

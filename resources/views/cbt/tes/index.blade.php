@@ -20,11 +20,21 @@
                     <div class="flex items-center gap-2 flex-wrap mb-1">
                         <span class="{{ $t->status_badge }}">{{ ucfirst($t->status) }}</span>
                         <span class="badge-muted">{{ optional($t->mapel)->nama_mapel ?? '🌐 Ujian Umum' }}</span>
-                        @foreach($t->rombelTargets as $rb)
-                            <span class="badge-info">{{ $rb->nama_rombel }}</span>
-                        @endforeach
-                        @if($t->rombelTargets->isEmpty() && $t->rombel)
-                            <span class="badge-info">{{ $t->rombel->nama_rombel }}</span>
+                        @if($t->target_mode === 'per_tingkat')
+                            {{-- Target per tingkat: tampilkan tingkatnya supaya admin bisa
+                                 langsung memverifikasi ujian ini menyasar tingkat mana saja --}}
+                            @forelse((array) $t->target_tingkat as $tk)
+                                <span class="badge-info">Tingkat {{ $tk }}</span>
+                            @empty
+                                <span class="badge-warning">⚠ Tingkat belum diatur</span>
+                            @endforelse
+                        @else
+                            @foreach($t->rombelTargets as $rb)
+                                <span class="badge-info">{{ $rb->nama_rombel }}</span>
+                            @endforeach
+                            @if($t->rombelTargets->isEmpty() && $t->rombel)
+                                <span class="badge-info">{{ $t->rombel->nama_rombel }}</span>
+                            @endif
                         @endif
                     </div>
                     <div class="text-lg font-bold text-ink-900">{{ $t->name }}</div>
