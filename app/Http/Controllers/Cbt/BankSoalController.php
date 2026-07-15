@@ -9,6 +9,7 @@ use App\Models\QuestionOption;
 use App\Models\QuestionType;
 use App\Models\Topic;
 use App\Services\Soal\ExportSoalService;
+use App\Services\Soal\ImageLocalizer;
 use App\Services\Soal\ImportSoalService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -101,8 +102,12 @@ class BankSoalController extends Controller
         ]);
     }
 
-    public function store(Request $r)
+    public function store(Request $r, ImageLocalizer $localizer)
     {
+        // Download gambar eksternal SEBELUM transaksi DB — fetch HTTP bisa
+        // lama (timeout 20 dtk/gambar), jangan sambil memegang lock transaksi.
+        $this->localizeRequestImages($r, $localizer);
+
         DB::transaction(function () use ($r) {
             $data = $this->validateBase($r);
             $data['correct_answer_text'] = $r->input('correct_answer_text');
@@ -136,8 +141,10 @@ class BankSoalController extends Controller
         ]);
     }
 
-    public function update(Request $r, Question $bankSoal)
+    public function update(Request $r, Question $bankSoal, ImageLocalizer $localizer)
     {
+        $this->localizeRequestImages($r, $localizer);
+
         DB::transaction(function () use ($r, $bankSoal) {
             $data = $this->validateBase($r);
             $data['correct_answer_text'] = $r->input('correct_answer_text');
@@ -146,6 +153,32 @@ class BankSoalController extends Controller
             $this->syncOptionsByType($r, $bankSoal);
         });
         return redirect()->route('bank-soal.index')->with('success', 'Soal diperbarui.');
+    }
+
+    /**
+     * Download semua gambar eksternal (hasil copy-paste dari web / screenshot
+     * base64) pada input soal & opsi ke storage/soal, lalu tulis ulang src-nya
+     * di request supaya yang tersimpan ke DB selalu gambar milik sendiri.
+     */
+    protected function localizeRequestImages(Request $r, ImageLocalizer $localizer): void
+    {
+        $merge = [];
+
+        if (is_string($r->input('question'))) {
+            $merge['question'] = $localizer->localizeHtml($r->input('question'));
+        }
+
+        foreach (['options', 'match_left', 'match_right'] as $f) {
+            $val = $r->input($f);
+            if (is_array($val)) {
+                $merge[$f] = array_map(
+                    fn ($t) => is_string($t) ? $localizer->localizeHtml($t) : $t,
+                    $val
+                );
+            }
+        }
+
+        if ($merge) $r->merge($merge);
     }
 
     public function destroy(Question $bankSoal)
