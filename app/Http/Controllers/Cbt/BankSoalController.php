@@ -21,10 +21,16 @@ class BankSoalController extends Controller
     public function index(Request $r)
     {
         $user = $r->user();
+
+        // RULE filter kelas utk GURU: wajib pilih mapel dulu. Tanpa mapel,
+        // filter tingkat diabaikan (dropdownnya pun dinonaktifkan di view) —
+        // supaya daftar tingkat bisa dibatasi sesuai penugasan mapel tsb.
+        $tingkatFilterAktif = $r->tingkat && (! $this->shouldScope($user) || $r->mapel);
+
         $query = Question::with('type', 'mapel', 'topic')
             ->when($r->q, fn ($x) => $x->where('title', 'like', "%{$r->q}%")->orWhere('question', 'like', "%{$r->q}%"))
             ->when($r->mapel, fn ($x) => $x->where('mata_pelajaran_id', $r->mapel))
-            ->when($r->tingkat, fn ($x) => $x->where('tingkat', (int) $r->tingkat))
+            ->when($tingkatFilterAktif, fn ($x) => $x->where('tingkat', (int) $r->tingkat))
             ->when($r->jenis, fn ($x) => $x->whereHas('type', fn ($t) => $t->where('slug', $r->jenis)));
 
         $query = $this->scopeBankSoalForUser($query, $user);
@@ -40,8 +46,9 @@ class BankSoalController extends Controller
             'items' => $items,
             'mapelList' => $mapelList,
             'types' => QuestionType::orderBy('id')->get(),
-            // Guru → dropdown hanya berisi tingkat yang diajarnya
-            'tingkatList' => $this->tingkatDropdownFor($user),
+            // Guru → dropdown tingkat mengikuti mapel terpilih (pasangan penugasan)
+            'tingkatList' => $this->tingkatDropdownFor($user, $r->mapel),
+            'tingkatButuhMapel' => $this->shouldScope($user) && ! $r->mapel,
         ]);
     }
 
@@ -78,7 +85,7 @@ class BankSoalController extends Controller
             'items'     => $items,
             'types'     => QuestionType::orderBy('id')->get(),
             'topiks'    => $mapel ? Topic::where('mata_pelajaran_id', $mapel->id)->orderBy('topic')->get() : collect(),
-            'tingkatList' => $this->tingkatDropdownFor($user),
+            'tingkatList' => $this->tingkatDropdownFor($user, $r->mapel),
         ]);
     }
 
@@ -131,7 +138,9 @@ class BankSoalController extends Controller
             'types' => QuestionType::orderBy('id')->get(),
             'mapel' => $mapelList,
             'topics' => Topic::orderBy('topic')->get(),
-            'tingkatList' => $this->tingkatDropdownFor($user),
+            'tingkatList' => \App\Models\TingkatKelas::dropdown(),
+            // Guru → opsi tingkat difilter di form sesuai mapel terpilih
+            'tingkatByMapel' => $this->shouldScope($user) ? $this->guruMapelTingkatMap($user) : null,
             'options' => collect(),
         ]);
     }
@@ -168,7 +177,8 @@ class BankSoalController extends Controller
             'types' => QuestionType::orderBy('id')->get(),
             'mapel' => $mapelList,
             'topics' => Topic::orderBy('topic')->get(),
-            'tingkatList' => $this->tingkatDropdownFor($user),
+            'tingkatList' => \App\Models\TingkatKelas::dropdown(),
+            'tingkatByMapel' => $this->shouldScope($user) ? $this->guruMapelTingkatMap($user) : null,
             'options' => $bankSoal->options,
         ]);
     }
@@ -304,15 +314,27 @@ class BankSoalController extends Controller
             'is_active' => 'nullable|boolean',
         ]) + ['is_active' => $r->boolean('is_active', true)];
 
-        // Guru hanya boleh menyimpan soal untuk tingkat yang diajarnya —
-        // dropdown di form memang sudah dibatasi, tapi tetap divalidasi di
-        // server supaya tidak bisa diakali lewat inspect element / request manual.
+        // Guru hanya boleh menyimpan soal untuk PASANGAN mapel+tingkat yang
+        // diajarnya — dropdown di form memang sudah dibatasi, tapi tetap
+        // divalidasi di server supaya tidak bisa diakali lewat inspect
+        // element / request manual.
         $user = $r->user();
-        if ($this->shouldScope($user) && ! empty($data['tingkat'])) {
-            $taught = $this->guruTingkatList($user);
-            if (! empty($taught) && ! in_array((int) $data['tingkat'], $taught, true)) {
+        if ($this->shouldScope($user)) {
+            $map = $this->guruMapelTingkatMap($user);
+            $mapelId = (int) ($data['mata_pelajaran_id'] ?? 0);
+
+            if (! $mapelId || ! array_key_exists($mapelId, $map)) {
                 throw \Illuminate\Validation\ValidationException::withMessages([
-                    'tingkat' => 'Anda tidak mengajar di tingkat kelas '.$data['tingkat'].'.',
+                    'mata_pelajaran_id' => 'Pilih mata pelajaran yang Anda ajarkan.',
+                ]);
+            }
+
+            $allowed = $map[$mapelId];
+            if (! empty($data['tingkat']) && ! empty($allowed)
+                && ! in_array((int) $data['tingkat'], $allowed, true)) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'tingkat' => 'Anda tidak mengajar mapel ini di tingkat kelas '.$data['tingkat']
+                        .'. Tingkat yang diperbolehkan: '.implode(', ', $allowed).'.',
                 ]);
             }
         }

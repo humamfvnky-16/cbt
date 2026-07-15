@@ -51,48 +51,93 @@ trait ScopedToGuruMapel
     }
 
     /**
-     * Apply scope ke query questions: guru hanya melihat soal pada
-     * MAPEL yang diajarnya DAN TINGKAT kelas yang diajarnya.
+     * Peta penugasan guru BERPASANGAN: [mata_pelajaran_id => [tingkat, ...]].
      *
-     * Catatan tingkat:
-     *  - soal ber-tingkat → harus cocok dengan salah satu tingkat yang diajar
-     *  - soal TANPA tingkat (null, banyak di data lama) → tetap terlihat,
-     *    supaya soal lama tidak mendadak "hilang" dari guru
-     *  - guru yang penugasannya belum punya rombel sama sekali → filter
-     *    tingkat dilewati (fallback mapel saja), daripada bank soalnya kosong
+     * Tingkat diambil per-baris guru_mapel (dari rombelnya masing-masing) —
+     * BUKAN gabungan semua mapel × semua tingkat. Contoh: guru mengajar
+     * Informatika di kelas 7 dan IPA di kelas 8–9 → dia TIDAK boleh melihat
+     * soal IPA kelas 7 (dulu bocor karena mapel & tingkat difilter terpisah).
+     *
+     * Mapel yang penugasannya tanpa rombel → daftar tingkat kosong = mapel
+     * itu tidak dibatasi tingkat (data penugasan tidak cukup untuk membatasi).
+     */
+    protected function guruMapelTingkatMap($user): array
+    {
+        if (! $this->shouldScope($user)) return [];
+
+        $rows = GuruMapel::with('rombel:id,tingkat')
+            ->where('guru_id', $user->id)->get();
+
+        $map = [];
+        foreach ($rows as $row) {
+            if (! $row->mata_pelajaran_id) continue;
+            $mapelId = (int) $row->mata_pelajaran_id;
+            $map[$mapelId] ??= ['tingkat' => [], 'tanpa_batas' => false];
+
+            $t = $row->rombel?->tingkat;
+            if ($t) {
+                $map[$mapelId]['tingkat'][] = (int) $t;
+            } else {
+                $map[$mapelId]['tanpa_batas'] = true;
+            }
+        }
+
+        return array_map(
+            fn ($v) => $v['tanpa_batas'] ? [] : array_values(array_unique($v['tingkat'])),
+            $map
+        );
+    }
+
+    /**
+     * Apply scope ke query questions: guru hanya melihat soal pada pasangan
+     * MAPEL+TINGKAT yang benar-benar diajarnya (per penugasan guru_mapel).
+     *
+     * Soal TANPA tingkat (null, banyak di data lama) tetap terlihat pada
+     * mapel yang diajar, supaya soal lama tidak mendadak "hilang" dari guru.
      */
     protected function scopeBankSoalForUser(Builder $q, $user): Builder
     {
         if (! $this->shouldScope($user)) return $q;
 
-        $q->whereIn('mata_pelajaran_id', $this->guruMapelIds($user) ?: [0]);
+        $map = $this->guruMapelTingkatMap($user);
 
-        $tingkatList = $this->guruTingkatList($user);
-        if (! empty($tingkatList)) {
-            $q->where(function ($x) use ($tingkatList) {
-                $x->whereNull('tingkat')->orWhereIn('tingkat', $tingkatList);
-            });
-        }
-
-        return $q;
+        return $q->where(function ($outer) use ($map) {
+            if (empty($map)) {
+                $outer->whereRaw('1=0');
+                return;
+            }
+            foreach ($map as $mapelId => $tingkatList) {
+                $outer->orWhere(function ($x) use ($mapelId, $tingkatList) {
+                    $x->where('mata_pelajaran_id', $mapelId);
+                    if (! empty($tingkatList)) {
+                        $x->where(fn ($y) => $y->whereNull('tingkat')->orWhereIn('tingkat', $tingkatList));
+                    }
+                });
+            }
+        });
     }
 
     /**
-     * Dropdown tingkat (nomor => nama) sesuai hak user:
-     * guru → HANYA tingkat kelas yang diajarnya; admin → semua tingkat.
-     * Guru yang penugasannya belum punya rombel → semua (jangan kosongkan UI).
+     * Dropdown tingkat (nomor => nama) sesuai hak user & mapel terpilih:
+     *  - admin → semua tingkat;
+     *  - guru + mapel dipilih → hanya tingkat di mana dia mengajar MAPEL ITU;
+     *  - guru tanpa mapel → kosong (rule: filter kelas wajib pilih mapel dulu).
      */
-    protected function tingkatDropdownFor($user): array
+    protected function tingkatDropdownFor($user, $mapelId = null): array
     {
         $all = \App\Models\TingkatKelas::dropdown();
         if (! $this->shouldScope($user)) return $all;
 
-        $taught = $this->guruTingkatList($user);
-        if (empty($taught)) return $all;
+        $map = $this->guruMapelTingkatMap($user);
+        $mapelId = (int) $mapelId;
+        if (! $mapelId || ! array_key_exists($mapelId, $map)) return [];
+
+        $allowed = $map[$mapelId];
+        if (empty($allowed)) return $all; // penugasan mapel ini tanpa rombel → tak dibatasi
 
         return array_filter(
             $all,
-            fn ($nama, $nomor) => in_array((int) $nomor, $taught, true),
+            fn ($nama, $nomor) => in_array((int) $nomor, $allowed, true),
             ARRAY_FILTER_USE_BOTH
         );
     }
@@ -102,13 +147,14 @@ trait ScopedToGuruMapel
     {
         if (! $this->shouldScope($user)) return;
 
-        if (! in_array($soal->mata_pelajaran_id, $this->guruMapelIds($user), true)) {
+        $map = $this->guruMapelTingkatMap($user);
+        if (! array_key_exists((int) $soal->mata_pelajaran_id, $map)) {
             abort(403, 'Anda tidak mengajar mapel ini.');
         }
 
-        $tingkatList = $this->guruTingkatList($user);
-        if ($soal->tingkat && ! empty($tingkatList) && ! in_array((int) $soal->tingkat, $tingkatList, true)) {
-            abort(403, 'Soal ini untuk tingkat kelas yang tidak Anda ajar.');
+        $allowed = $map[(int) $soal->mata_pelajaran_id];
+        if ($soal->tingkat && ! empty($allowed) && ! in_array((int) $soal->tingkat, $allowed, true)) {
+            abort(403, 'Anda tidak mengajar mapel ini di tingkat kelas '.$soal->tingkat.'.');
         }
     }
 

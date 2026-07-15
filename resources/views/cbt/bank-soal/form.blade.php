@@ -48,6 +48,8 @@
           tingkat: '{{ old('tingkat', $item->tingkat) }}',
           topicId: '{{ old('topic_id', $item->topic_id) }}',
           topics: @js($topicsJson),
+          mapelId: '{{ old('mata_pelajaran_id', $item->mata_pelajaran_id) }}',
+          tingkatByMapel: @js($tingkatByMapel ?? null),
       })"
       x-init="initEditors()">
     @csrf @if($item->exists) @method('PUT') @endif
@@ -63,18 +65,34 @@
             @error('question_type_id')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
         </div>
 
-        <x-field type="select" name="mata_pelajaran_id" label="Mata Pelajaran" :value="$item->mata_pelajaran_id"
-                 :options="$mapel->pluck('nama_mapel', 'id')->toArray()"/>
-
-        {{-- Tingkat / Kelas: dropdown dari master tingkat_kelas --}}
         <div>
-            <label class="label">Tingkat / Kelas</label>
-            <select name="tingkat" class="select" x-model="tingkat" @change="onTingkatChange()">
-                <option value="">— Pilih tingkat —</option>
-                @foreach($tingkatList as $nomor => $nama)
-                    <option value="{{ $nomor }}">{{ $nama }}</option>
+            <label class="label">Mata Pelajaran</label>
+            <select name="mata_pelajaran_id" class="select" x-model="mapelId" @change="onMapelChange()">
+                <option value="">— Pilih —</option>
+                @foreach($mapel->pluck('nama_mapel', 'id') as $val => $lbl)
+                    <option value="{{ $val }}">{{ $lbl }}</option>
                 @endforeach
             </select>
+            @error('mata_pelajaran_id')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
+        </div>
+
+        {{-- Tingkat / Kelas: dropdown dari master tingkat_kelas.
+             Untuk GURU, opsinya mengikuti mapel terpilih — hanya tingkat di
+             mana dia mengajar mapel itu (pasangan penugasan guru_mapel). --}}
+        <div>
+            <label class="label">Tingkat / Kelas</label>
+            <select name="tingkat" class="select" x-model="tingkat" @change="onTingkatChange()"
+                    :disabled="tingkatByMapel && !mapelId">
+                <option value="">— Pilih tingkat —</option>
+                @foreach($tingkatList as $nomor => $nama)
+                    <option value="{{ $nomor }}"
+                            :disabled="!tingkatBoleh({{ $nomor }})"
+                            :hidden="!tingkatBoleh({{ $nomor }})">{{ $nama }}</option>
+                @endforeach
+            </select>
+            <p x-show="tingkatByMapel && !mapelId" x-cloak class="mt-1 text-xs text-ink-500">
+                Pilih mata pelajaran dulu — tingkat mengikuti penugasan mengajar Anda.
+            </p>
             @error('tingkat')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
         </div>
 
@@ -263,12 +281,32 @@ function imagesUploadHandler(blobInfo) {
     });
 }
 
-function bankSoalForm({ typesMap, currentType, pgCorrect, pgkCorrect, bsAnswer, tingkat, topicId, topics }) {
+function bankSoalForm({ typesMap, currentType, pgCorrect, pgkCorrect, bsAnswer, tingkat, topicId, topics, mapelId, tingkatByMapel }) {
     return {
         typesMap, currentType, slug: typesMap[currentType] || 'pg',
         pgCorrect, pgkCorrect, bsAnswer,
         tingkat: tingkat || '', topicId: topicId || '', topics: topics || [],
+        mapelId: mapelId || '',
+        tingkatByMapel: tingkatByMapel || null, // null = admin (tanpa batasan)
         showSymbols: false, symbolTarget: 'pertanyaan',
+
+        /** Bolehkah tingkat `nomor` dipilih untuk mapel yang sedang dipilih? */
+        tingkatBoleh(nomor) {
+            if (! this.tingkatByMapel) return true;            // admin: bebas
+            if (! this.mapelId) return false;                  // wajib pilih mapel dulu
+            const allowed = this.tingkatByMapel[this.mapelId];
+            if (allowed === undefined) return false;           // mapel tidak diajar
+            if (allowed.length === 0) return true;             // penugasan tanpa rombel: bebas
+            return allowed.includes(Number(nomor));
+        },
+
+        /** Saat mapel berubah, reset tingkat (dan topik) jika tak lagi valid */
+        onMapelChange() {
+            if (this.tingkat && ! this.tingkatBoleh(this.tingkat)) {
+                this.tingkat = '';
+                this.onTingkatChange();
+            }
+        },
 
         // Topik yang cocok dengan tingkat terpilih
         get filteredTopics() {

@@ -18,7 +18,8 @@
 
 <form class="card card-pad mb-4 flex flex-wrap gap-2">
     <input name="q" value="{{ request('q') }}" class="input flex-1 min-w-[200px]" placeholder="Cari judul / isi soal...">
-    <select name="mapel" class="select w-48">
+    {{-- Mapel auto-submit: daftar tingkat di sebelahnya mengikuti mapel terpilih --}}
+    <select name="mapel" class="select w-48" onchange="this.form.submit()">
         <option value="">Semua mapel</option>
         @foreach($mapelList as $m)
             <option value="{{ $m->id }}" @selected(request('mapel')==$m->id)>{{ $m->nama_mapel }}</option>
@@ -30,12 +31,20 @@
             <option value="{{ $t->slug }}" @selected(request('jenis')==$t->slug)>{{ $t->question_type }}</option>
         @endforeach
     </select>
-    <select name="tingkat" class="select w-40">
-        <option value="">Semua kelas</option>
-        @foreach($tingkatList as $nomor => $nama)
-            <option value="{{ $nomor }}" @selected(request('tingkat') == $nomor)>{{ $nama }}</option>
-        @endforeach
-    </select>
+    {{-- RULE guru: filter kelas baru aktif setelah pilih mapel — daftar
+         tingkatnya pun hanya tingkat di mana dia mengajar mapel tsb --}}
+    @if($tingkatButuhMapel ?? false)
+        <select class="select w-44" disabled title="Pilih mapel dulu untuk memfilter kelas">
+            <option>Pilih mapel dulu…</option>
+        </select>
+    @else
+        <select name="tingkat" class="select w-40">
+            <option value="">Semua kelas</option>
+            @foreach($tingkatList as $nomor => $nama)
+                <option value="{{ $nomor }}" @selected(request('tingkat') == $nomor)>{{ $nama }}</option>
+            @endforeach
+        </select>
+    @endif
     <button class="btn-secondary"><x-icon name="search" class="w-4 h-4"/></button>
 </form>
 
