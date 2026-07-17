@@ -38,6 +38,12 @@
                             <x-icon name="key" class="w-4 h-4"/> Ujian Terkunci (Diblokir)
                         </a>
                         <p class="text-xs text-rose-600 text-center mt-1">Diblokir karena pelanggaran. Hubungi admin/guru.</p>
+                    @elseif($st && $st['attempt_terbaru_selesai'])
+                        <a href="{{ route('siswa.ujian.result', [$q, $st['attempt_terbaru_selesai']]) }}"
+                           class="btn-secondary w-full justify-center mt-4">
+                            <x-icon name="check" class="w-4 h-4"/> Selesai Dikerjakan
+                        </a>
+                        <p class="text-xs text-emerald-600 text-center mt-1">Anda sudah menyelesaikan ujian ini.</p>
                     @elseif($q->belum_dimulai)
                         <button type="button" disabled
                                 class="btn-secondary w-full justify-center mt-4 opacity-60 cursor-not-allowed">

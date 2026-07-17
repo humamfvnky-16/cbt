@@ -173,6 +173,148 @@ class HasilController extends Controller
     }
 
     /* ============================================================
+     * REMIDIAL & PENGAYAAN
+     * ============================================================ */
+    public function remidialPengayaan(Request $r)
+    {
+        $quizzes = $this->quizListForUser($r->user());
+
+        if (! $r->quiz) {
+            return view('cbt.hasil.remidial', [
+                'quiz'    => null,
+                'quizzes' => $quizzes,
+                'data'    => null,
+                'kkm'     => (int) ($r->kkm ?? 70),
+            ]);
+        }
+
+        $quiz = Quiz::with('mapel', 'questions', 'creator', 'rombel', 'tahunAjaran')->findOrFail($r->quiz);
+        $kkm  = (int) ($r->kkm ?? 70);
+        $data = $this->computeRemidialPengayaan($quiz, $kkm);
+
+        return view('cbt.hasil.remidial', compact('quiz', 'quizzes', 'data', 'kkm'));
+    }
+
+    /**
+     * Export "PROGRAM REMIDIAL DAN PROGRAM PENGAYAAN" (Word) — format dokumen
+     * program remidial (siswa < KKM) & program pengayaan (siswa tuntas) yang
+     * dipakai sekolah: data umum + tabel siswa + tanda tangan guru mapel.
+     */
+    public function exportRemidialPengayaan(Request $r, HasilReportService $svc)
+    {
+        $quiz = Quiz::with('mapel', 'questions', 'creator', 'rombel', 'tahunAjaran')->findOrFail($r->quiz);
+        $kkm  = (int) ($r->kkm ?? 70);
+        $data = $this->computeRemidialPengayaan($quiz, $kkm);
+
+        $sekolah = Sekolah::first();
+
+        $meta = [
+            'nama_sekolah'    => optional($sekolah)->nama_sekolah ?? '-',
+            'kota'            => optional($sekolah)->kabupaten ?? '-',
+            'kelas_semester'  => $r->kelas_semester ?: $this->deriveKelasSemester($quiz, $r->semester),
+            'mapel'           => optional($quiz->mapel)->nama_mapel ?? '-',
+            'ulangan_ke'      => $r->ulangan_ke ?: '-',
+            'tanggal_ulangan' => $r->tanggal_ulangan ? Carbon::parse($r->tanggal_ulangan) : ($quiz->valid_from ?? now()),
+            'bentuk_soal'     => $r->bentuk_soal ?: 'Pilihan Ganda',
+            'materi_kd'       => $r->materi_kd ?: '-',
+            'rencana_ulangan_rem' => $r->rencana_ulangan_rem ? Carbon::parse($r->rencana_ulangan_rem) : null,
+            'kkm'             => $kkm,
+            'bentuk_remidial' => $r->bentuk_remidial ?: $data['bentuk_remidial_default'],
+            'bentuk_pengayaan'=> $r->bentuk_pengayaan ?: $data['bentuk_pengayaan_default'],
+            'nama_pengajar'   => optional($quiz->creator)->nama_ptk ?? optional($r->user())->nama_ptk ?? '-',
+            'nip_pengajar'    => optional($quiz->creator)->nip ?? '-',
+        ];
+
+        return $svc->exportRemidialPengayaan($quiz, $data['remidial'], $data['pengayaan'], $meta);
+    }
+
+    /**
+     * Kelompokkan attempt selesai (terbaru per siswa) menjadi daftar remidial
+     * (nilai < KKM) dan pengayaan (nilai >= KKM), lengkap dengan nomor soal
+     * yang dijawab salah/kosong sebagai "indikator yang tidak dikuasai".
+     */
+    protected function computeRemidialPengayaan(Quiz $quiz, int $kkm): array
+    {
+        $attempts = QuizAttempt::with(['siswa', 'answers'])
+            ->where('quiz_id', $quiz->id)
+            ->where('is_done', true)
+            ->orderBy('time_end')
+            ->get()
+            ->keyBy('siswa_id') // attempt terbaru per siswa (yang terakhir menimpa)
+            ->values()
+            ->sortBy(fn ($a) => optional($a->siswa)->nama_siswa, SORT_NATURAL | SORT_FLAG_CASE)
+            ->values();
+
+        $totalMarks = (float) ($quiz->total_marks ?? 0);
+        $nomorSoal  = [];
+        foreach ($quiz->questions as $i => $qq) {
+            $nomorSoal[$qq->id] = $i + 1;
+        }
+
+        $remidial = [];
+        $pengayaan = [];
+        foreach ($attempts as $a) {
+            $skor  = (float) ($a->score ?? 0);
+            $nilai = $totalMarks > 0 ? round($skor / $totalMarks * 100, 1) : $skor;
+
+            // nomor soal yang salah / kosong
+            $salah = [];
+            foreach ($quiz->questions as $qq) {
+                $ans = $a->answers->firstWhere('quiz_question_id', $qq->id);
+                if (! $ans || ! $ans->is_correct) {
+                    $salah[] = $nomorSoal[$qq->id];
+                }
+            }
+            sort($salah);
+
+            $row = [
+                'nama'       => optional($a->siswa)->nama_siswa ?? '-',
+                'nisn'       => optional($a->siswa)->nisn ?? '-',
+                'nilai'      => $nilai,
+                'soal_salah' => implode(', ', $salah),
+            ];
+
+            if ($nilai < $kkm) {
+                $remidial[] = $row;
+            } else {
+                $pengayaan[] = $row;
+            }
+        }
+
+        // Teknik pelaksanaan remidial otomatis sesuai persentase peserta remidi
+        $n = count($remidial) + count($pengayaan);
+        $pct = $n ? count($remidial) / $n * 100 : 0;
+        $bentukRemidial = match (true) {
+            $pct <= 20 => 'Penugasan individu diakhiri dengan tes (lisan/tertulis)',
+            $pct < 50  => 'Penugasan secara kelompok diakhiri dengan tes individual (lisan/tertulis)',
+            default    => 'Pembelajaran ulang diakhiri dengan tes individual (tertulis)',
+        };
+
+        return [
+            'remidial'  => $remidial,
+            'pengayaan' => $pengayaan,
+            'persen_remidial'          => $pct,
+            'bentuk_remidial_default'  => $bentukRemidial,
+            'bentuk_pengayaan_default' => 'Memberikan soal-soal pemecahan masalah (pengayaan) yang terkait dengan materi, dan memanfaatkan siswa untuk menjadi Tutor Sebaya bagi teman yang mengikuti remidial.',
+        ];
+    }
+
+    /** Label "Tingkat-Rombel / Semester" untuk header dokumen remidial. */
+    protected function deriveKelasSemester(Quiz $quiz, ?string $semester = null): string
+    {
+        $rombel = $quiz->rombel;
+        if (! $rombel) {
+            $rombel = QuizAttempt::with('siswa.rombelSekarang.rombel')
+                ->where('quiz_id', $quiz->id)->where('is_done', true)->get()
+                ->map(fn ($a) => optional(optional($a->siswa)->rombelSekarang)->rombel)
+                ->filter()->first();
+        }
+        $kelas = $rombel ? ($rombel->tingkat . '-' . $rombel->nama_rombel) : '-';
+
+        return $kelas . ' / ' . ($semester ?: (now()->month >= 7 ? 'Ganjil' : 'Genap'));
+    }
+
+    /* ============================================================
      * SHARED QUERY & SCOPE
      * ============================================================ */
     protected function buildAttemptQuery(Request $r)

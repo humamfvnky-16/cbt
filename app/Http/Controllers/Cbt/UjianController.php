@@ -73,6 +73,20 @@ class UjianController extends Controller
             return redirect()->route('siswa.ujian.blocked', [$quiz, $blocked]);
         }
 
+        // Tolak kalau siswa sudah menyelesaikan ujian ini — satu siswa satu
+        // attempt. Tanpa guard ini firstOrCreate() di bawah (kondisi
+        // is_done=false) membuatkan attempt BARU, sehingga siswa bisa
+        // mengerjakan ulang tanpa batas cukup dengan menekan "Mulai Ujian" lagi.
+        $selesai = QuizAttempt::where('quiz_id', $quiz->id)
+            ->where('siswa_id', $siswa->id)
+            ->where('is_done', true)
+            ->where('is_blocked', false)
+            ->orderByDesc('id')
+            ->first();
+        if ($selesai) {
+            return redirect()->route('siswa.ujian.result', [$quiz, $selesai]);
+        }
+
         $existing = QuizAttempt::where('quiz_id', $quiz->id)
             ->where('siswa_id', $siswa->id)
             ->where('is_done', false)

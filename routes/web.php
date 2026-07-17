@@ -119,6 +119,8 @@ Route::middleware([
         Route::get('/hasil/statistik/export',        [HasilController::class, 'exportStatistik'])->name('hasil.statistik.export');
         Route::get('/hasil/analisis-butir',          [HasilController::class, 'analisisButir'])->name('hasil.analisis');
         Route::get('/hasil/analisis-butir/export',   [HasilController::class, 'exportAnalisisButir'])->name('hasil.analisis.export');
+        Route::get('/hasil/remidial-pengayaan',        [HasilController::class, 'remidialPengayaan'])->name('hasil.remidial');
+        Route::get('/hasil/remidial-pengayaan/export', [HasilController::class, 'exportRemidialPengayaan'])->name('hasil.remidial.export');
         Route::get('/hasil/{attempt}',               [HasilController::class, 'detail'])->name('hasil.detail');
 
     });

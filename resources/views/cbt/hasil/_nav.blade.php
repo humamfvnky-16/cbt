@@ -4,6 +4,7 @@
         'index'     => ['Daftar Nilai',     route('hasil.index')],
         'statistik' => ['Statistik Ujian',  route('hasil.statistik')],
         'analisis'  => ['Analisis Butir',   route('hasil.analisis')],
+        'remidial'  => ['Remidial & Pengayaan', route('hasil.remidial')],
     ];
 @endphp
 <div class="flex gap-1 bg-white rounded-xl p-1 shadow-soft border border-slate-100 w-fit overflow-x-auto mb-4">
