@@ -52,7 +52,7 @@
             <div class="card-header">
                 <div>
                     <h3 class="text-base font-semibold text-ink-900">Ujian Aktif</h3>
-                    <p class="text-xs text-ink-500">Registrasi ujian yang sedang dipublikasikan</p>
+                    <p class="text-xs text-ink-500">Registrasi ujian yang dipublikasikan</p>
                 </div>
                 <a href="{{ route('tes.index') }}" class="btn-secondary text-xs py-1.5 px-3">Lihat semua</a>
             </div>
