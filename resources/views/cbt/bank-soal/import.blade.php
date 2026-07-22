@@ -52,7 +52,7 @@
             <div class="font-semibold mb-1">📊 Excel (.xlsx)</div>
             <p class="text-ink-600 text-xs">Header wajib di baris 1, urutan kolom:</p>
             <code class="block text-[10px] bg-slate-50 p-2 rounded mt-1 border border-slate-200 break-all">
-                jenis | mapel_kode | tingkat | judul | pertanyaan | opsi_a | opsi_b | opsi_c | opsi_d | opsi_e | jawaban
+                jenis | mapel_kode | tingkat | judul | pertanyaan | opsi_a | opsi_b | opsi_c | opsi_d | opsi_e | jawaban | gambar
             </code>
         </div>
 
@@ -63,12 +63,22 @@
 #MAPEL: MTK
 #JUDUL: Akar 144
 #SOAL: Berapa akar dari 144?
+[tempel gambar di sini → ikut ke soal]
 A. 10
 B. 11
 C. 12
 D. 13
 #JAWABAN: C
 ---</pre>
+        </div>
+
+        <div>
+            <div class="font-semibold mb-1">Menambahkan Gambar</div>
+            <ul class="text-xs text-ink-600 space-y-1 pl-4 list-disc">
+                <li><strong>Excel:</strong> isi kolom <code>gambar</code> dengan URL/data-URI gambar, atau tempel gambar langsung ke sheet pada baris soal yang bersangkutan.</li>
+                <li><strong>Word:</strong> tempel/insert gambar tepat setelah baris <code>#SOAL:</code> (ikut ke soal) atau setelah baris opsi <code>A./B./…</code> (ikut ke opsi).</li>
+                <li>Gambar (embedded, URL, maupun base64) otomatis diunduh & disimpan ke server saat import.</li>
+            </ul>
         </div>
 
         <div>

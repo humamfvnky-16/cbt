@@ -161,6 +161,26 @@ class ExportSoalService
         $section->addText('---');
         $section->addTextBreak(1);
 
+        // ===== Contoh 6: PG dengan GAMBAR =====
+        // Tempel/insert gambar tepat SETELAH baris #SOAL (sebelum opsi) supaya
+        // ikut ke soal. Untuk gambar pada opsi, taruh gambar setelah baris opsi.
+        $section->addText('#JENIS: pg', ['bold' => true]);
+        $section->addText('#MAPEL: MTK');
+        $section->addText('#TINGKAT: 10');
+        $section->addText('#JUDUL: Luas Persegi');
+        $section->addText('#SOAL: Perhatikan gambar berikut. Berapakah luas persegi tersebut?');
+        if ($png = $this->placeholderImagePng('CONTOH GAMBAR SOAL')) {
+            // Gambar contoh — ganti dengan gambar soal Anda saat mengisi template.
+            $section->addImage($png, ['width' => 190, 'height' => 77]);
+        }
+        $section->addText('A. 16 cm2');
+        $section->addText('B. 20 cm2');
+        $section->addText('C. 24 cm2');
+        $section->addText('D. 32 cm2');
+        $section->addText('#JAWABAN: A');
+        $section->addText('---');
+        $section->addTextBreak(1);
+
         // Catatan
         $section->addTextBreak(1);
         $section->addText('Catatan format:', ['bold' => true]);
@@ -172,6 +192,8 @@ class ExportSoalService
         $section->addListItem('Jawaban PGK = huruf dipisah koma (mis. A,C,E).');
         $section->addListItem('Jawaban Benar-Salah = B (benar) atau S (salah).');
         $section->addListItem('Jawaban Penjodohan = "huruf=teks" dipisah titik koma.');
+        $section->addListItem('Gambar: tempel/insert gambar setelah baris #SOAL agar ikut ke soal, '
+            .'atau setelah baris opsi (A./B./...) agar ikut ke opsi tsb.');
 
         $writer = WordIOFactory::createWriter($phpWord, 'Word2007');
         return response()->streamDownload(function () use ($writer) {
@@ -192,30 +214,31 @@ class ExportSoalService
             'jenis', 'mapel_kode', 'tingkat',
             'judul', 'pertanyaan',
             'opsi_a', 'opsi_b', 'opsi_c', 'opsi_d', 'opsi_e',
-            'jawaban',
+            'jawaban', 'gambar',
         ];
         $sheet->fromArray([$headers], null, 'A1');
-        $sheet->getStyle('A1:K1')->getFont()->setBold(true);
-        $sheet->getStyle('A1:K1')->getFill()
+        $sheet->getStyle('A1:L1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:L1')->getFill()
             ->setFillType(Fill::FILL_SOLID)
             ->getStartColor()->setRGB('1F47F5');
-        $sheet->getStyle('A1:K1')->getFont()->getColor()->setRGB('FFFFFF');
-        $sheet->getStyle('A1:K1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('A1:L1')->getFont()->getColor()->setRGB('FFFFFF');
+        $sheet->getStyle('A1:L1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
         // Paksa kolom data jadi TEXT supaya Excel tidak auto-convert
         // (mis. kode mapel "7-1", jawaban "A,C,E", angka tetap text)
-        $sheet->getStyle('A2:K9999')->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_TEXT);
-        foreach (range('A', 'K') as $col) {
+        $sheet->getStyle('A2:L9999')->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_TEXT);
+        foreach (range('A', 'L') as $col) {
             $sheet->getStyle($col)->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_TEXT);
         }
 
-        // Contoh baris untuk tiap jenis
+        // Contoh baris untuk tiap jenis. Kolom terakhir = gambar (URL / data-URI,
+        // opsional). Contoh URL diberikan pada baris PG untuk menunjukkan formatnya.
         $examples = [
-            ['pg',          'MTK', '10', 'Akar 144',            'Berapa akar dari 144?',                '10','11','12','13','',           'C'],
-            ['pgk',         'MTK', '10', 'Bilangan prima',      'Manakah bilangan prima?',              '2','4','7','9','11',             'A,C,E'],
-            ['fill-blank',  'BIN', '10', 'Ibu kota Indonesia',  'Ibu kota negara Indonesia adalah ___', '','','','','',                   'Jakarta'],
-            ['benar-salah', 'IPS', '10', 'Bumi bulat',          'Bumi berbentuk bulat sempurna.',       '','','','','',                   'S'],
-            ['penjodohan',  'IPA', '10', 'Pasangkan organ',     'Pasangkan organ dengan fungsinya',     'Jantung','Paru-paru','Hati','','', 'A=Memompa darah; B=Pernapasan; C=Detoksifikasi'],
+            ['pg',          'MTK', '10', 'Akar 144',            'Berapa akar dari 144?',                '10','11','12','13','',           'C',      'https://situs-anda.com/gambar/soal.png'],
+            ['pgk',         'MTK', '10', 'Bilangan prima',      'Manakah bilangan prima?',              '2','4','7','9','11',             'A,C,E',  ''],
+            ['fill-blank',  'BIN', '10', 'Ibu kota Indonesia',  'Ibu kota negara Indonesia adalah ___', '','','','','',                   'Jakarta',''],
+            ['benar-salah', 'IPS', '10', 'Bumi bulat',          'Bumi berbentuk bulat sempurna.',       '','','','','',                   'S',      ''],
+            ['penjodohan',  'IPA', '10', 'Pasangkan organ',     'Pasangkan organ dengan fungsinya',     'Jantung','Paru-paru','Hati','','', 'A=Memompa darah; B=Pernapasan; C=Detoksifikasi', ''],
         ];
         foreach ($examples as $rIdx => $row) {
             $r = 2 + $rIdx;
@@ -227,7 +250,12 @@ class ExportSoalService
             }
         }
 
-        foreach (range('A', 'K') as $col) $sheet->getColumnDimension($col)->setAutoSize(true);
+        foreach (range('A', 'L') as $col) $sheet->getColumnDimension($col)->setAutoSize(true);
+
+        $this->addExcelPetunjukSheet($spreadsheet);
+        // Pastikan file terbuka pada sheet data (bukan "Petunjuk") saat dibuka
+        // user, dan importer membaca sheet yang benar.
+        $spreadsheet->setActiveSheetIndex(0);
 
         $writer = SpreadsheetIOFactory::createWriter($spreadsheet, 'Xlsx');
         return response()->streamDownload(function () use ($writer) {
@@ -235,6 +263,46 @@ class ExportSoalService
         }, 'template-import-soal.xlsx', [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         ]);
+    }
+
+    /** Sheet kedua "Petunjuk": penjelasan format termasuk cara menambah gambar. */
+    protected function addExcelPetunjukSheet(Spreadsheet $spreadsheet): void
+    {
+        $ws = $spreadsheet->createSheet();
+        $ws->setTitle('Petunjuk');
+
+        $lines = [
+            ['PETUNJUK PENGISIAN TEMPLATE IMPORT BANK SOAL', true],
+            ['', false],
+            ['Isi data pada sheet "Bank Soal". Baris 1 adalah header (jangan diubah/dihapus).', false],
+            ['Hapus baris contoh sebelum mengimport data Anda sendiri.', false],
+            ['', false],
+            ['Kolom jenis: pg, pgk, fill-blank, benar-salah, penjodohan.', false],
+            ['Kolom mapel_kode: harus sama dengan kode mapel di Data Center.', false],
+            ['Kolom tingkat: 1-12, opsional (boleh dikosongkan).', false],
+            ['Jawaban PG = huruf tunggal (mis. C). PGK = huruf dipisah koma (mis. A,C,E).', false],
+            ['Jawaban Benar-Salah = B atau S. Fill-blank = teks jawaban.', false],
+            ['Jawaban Penjodohan = "huruf=teks" dipisah titik koma (mis. A=..; B=..).', false],
+            ['', false],
+            ['MENAMBAH GAMBAR PADA SOAL', true],
+            ['1. Kolom "gambar": isi dengan URL gambar (mis. https://.../soal.png)', false],
+            ['   atau data-URI base64 (mis. data:image/png;base64,....).', false],
+            ['   Gambar akan diunduh & disimpan otomatis ke server saat import.', false],
+            ['2. Atau tempel/insert gambar langsung ke dalam sheet (Insert > Picture),', false],
+            ['   letakkan gambar pada BARIS soal yang bersangkutan. Gambar akan', false],
+            ['   ditautkan ke soal pada baris tempat gambar itu berada.', false],
+            ['3. Bisa juga menulis tag <img src="..."> langsung di kolom pertanyaan/opsi.', false],
+            ['', false],
+            ['Untuk soal yang banyak gambarnya, Template Word (.docx) lebih mudah:', false],
+            ['cukup tempel gambar tepat di bawah baris #SOAL atau baris opsi.', false],
+        ];
+
+        foreach ($lines as $i => [$text, $bold]) {
+            $cell = 'A'.($i + 1);
+            $ws->setCellValueExplicit($cell, $text, DataType::TYPE_STRING);
+            if ($bold) $ws->getStyle($cell)->getFont()->setBold(true);
+        }
+        $ws->getColumnDimension('A')->setWidth(90);
     }
 
     /*    helpers    */
@@ -373,6 +441,42 @@ class ExportSoalService
             },
             $html
         );
+    }
+
+    /**
+     * Hasilkan PNG placeholder (via GD) untuk dipakai sebagai contoh gambar soal
+     * di template. Null bila ekstensi GD tidak tersedia — template tetap valid,
+     * hanya tanpa gambar contoh.
+     */
+    protected function placeholderImagePng(string $label): ?string
+    {
+        if (! function_exists('imagecreatetruecolor')) return null;
+
+        try {
+            $w = 340; $h = 136;
+            $im = imagecreatetruecolor($w, $h);
+            $bg     = imagecolorallocate($im, 239, 246, 255); // biru sangat muda
+            $border = imagecolorallocate($im, 31, 71, 245);   // brand
+            $ink    = imagecolorallocate($im, 30, 41, 59);     // ink-900
+
+            imagefilledrectangle($im, 0, 0, $w - 1, $h - 1, $bg);
+            imagerectangle($im, 0, 0, $w - 1, $h - 1, $border);
+
+            $title = imagefontwidth(5) * strlen($label);
+            imagestring($im, 5, (int) max(6, ($w - $title) / 2), 44, $label, $ink);
+            $sub = 'Ganti dengan gambar soal Anda';
+            $sw = imagefontwidth(3) * strlen($sub);
+            imagestring($im, 3, (int) max(6, ($w - $sw) / 2), 78, $sub, $ink);
+
+            ob_start();
+            imagepng($im);
+            $bytes = ob_get_clean();
+            imagedestroy($im);
+
+            return $bytes !== '' ? $bytes : null;
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     protected function typeSlug(Question $q): string

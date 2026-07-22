@@ -38,6 +38,18 @@ class ImageLocalizer
         'image/bmp'     => 'bmp',
     ];
 
+    /**
+     * Simpan byte gambar MENTAH (mis. gambar embedded yang diekstrak dari file
+     * .docx / .xlsx saat import) ke storage/soal, kembalikan src root-relative
+     * "/storage/soal/<hash>.<ext>". Null bila bukan gambar valid / terlalu besar.
+     *
+     * Memakai dedup sha1 & deteksi tipe yang sama dengan localizeHtml().
+     */
+    public function store(string $bytes): ?string
+    {
+        return $this->storeBytes($bytes);
+    }
+
     /** Proses seluruh <img> dalam 1 blok HTML. Aman dipanggil untuk teks polos. */
     public function localizeHtml(?string $html): ?string
     {
